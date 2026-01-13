@@ -209,7 +209,7 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
           <CardHeader>
             <CardTitle>عرض الخرائط (GIS)</CardTitle>
             <CardDescription>
-              (قيد التطوير) سيتم هنا عرض خريطة للعمالات مع تلوينها بناءً على درجة الصمود الإجمالية.
+             سيتم هنا عرض خريطة تفاعلية للعمالات باستخدام Leaflet.js، مع تلوين كل منطقة بناءً على درجة الصمود الإجمالية المحفوظة. سيسمح ذلك بتحليل جغرافي فوري للفجوات. (قيد التطوير)
             </CardDescription>
           </CardHeader>
           <CardContent>
