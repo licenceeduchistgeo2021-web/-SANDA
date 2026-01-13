@@ -6,11 +6,12 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Download } from 'lucide-react';
 import { surveyData, scientificNotes, Axis, Question } from '@/lib/sanda-data';
 import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
 import {motion, AnimatePresence} from 'framer-motion'
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 type AuditProps = {
   governorate: string;
@@ -122,6 +123,13 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
     setShowMiniAnalysis(false);
     setCurrentAxisIndex(currentAxisIndex + 1);
   };
+  
+  const handleExportAxisPdf = () => {
+    // This is a placeholder for the PDF export functionality.
+    // In a real application, you would use a library like jsPDF and jsPDF-autotable.
+    alert(`تصدير نتائج المحور: ${currentAxis.title}`);
+    window.print();
+  };
 
   const handleBack = () => {
     if (currentAxisIndex > 0) {
@@ -136,6 +144,13 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
   
   const axisScore = useMemo(() => calculateAxisScore(currentAxisId, answers), [currentAxisId, answers]);
   const interpretation = useMemo(() => getInterpretation(axisScore), [axisScore]);
+  const maturityPercentage = useMemo(() => (axisScore / 5) * 100, [axisScore]);
+
+  const chartData = [
+    { name: 'Score', value: maturityPercentage },
+    { name: 'Remaining', value: 100 - maturityPercentage },
+  ];
+  const COLORS = ['hsl(var(--accent))', 'hsl(var(--muted))'];
 
 
   if (showMiniAnalysis) {
@@ -147,14 +162,42 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
                         <CardTitle className="text-2xl text-primary">تحليل نتائج: {currentAxis.title}</CardTitle>
                         <CardDescription>هذه هي نتيجتك الأولية لهذا المحور.</CardDescription>
                     </CardHeader>
-                    <CardContent className="text-center">
-                        <div className="text-7xl font-bold text-accent mb-4">{axisScore.toFixed(2)}</div>
-                        <div className="mb-6">
+                    <CardContent className="flex flex-col items-center gap-6">
+                        <div className="relative h-48 w-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={chartData}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        startAngle={90}
+                                        endAngle={450}
+                                        paddingAngle={0}
+                                        dataKey="value"
+                                        stroke="none"
+                                    >
+                                        {chartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                             <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-4xl font-bold text-foreground">{axisScore.toFixed(2)}</span>
+                                <span className="text-sm text-muted-foreground">مستوى النضج: {maturityPercentage.toFixed(0)}%</span>
+                            </div>
+                        </div>
+
+                        <div className="text-center">
                             <p className="text-xl font-semibold">{interpretation.title}</p>
-                            <p className="text-muted-foreground mt-2">{interpretation.description}</p>
+                            <p className="text-muted-foreground mt-2 max-w-md mx-auto">{interpretation.description}</p>
                         </div>
                     </CardContent>
-                    <CardFooter className="flex justify-center">
+                    <CardFooter className="flex flex-col sm:flex-row justify-center gap-4">
+                        <Button onClick={handleExportAxisPdf} variant="outline">
+                           <Download className="ml-2 h-4 w-4" />
+                            تصدير تقرير المحور
+                        </Button>
                         <Button onClick={handleProceedToNextAxis} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
                             الانتقال إلى المحور التالي
                         </Button>
