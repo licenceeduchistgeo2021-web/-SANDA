@@ -95,7 +95,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         `;
         
         Object.keys(surveyData).forEach(axisId => {
-            const axis = surveyData[axisId];
+            const axis = surveyData[axisId as keyof typeof surveyData];
             reportContent += `<h2 class="page-break">${axis.title}</h2>`;
             reportContent += `<table><thead><tr><th>السؤال</th><th>الإجابة المختارة</th><th>المستوى</th></tr></thead><tbody>`;
             axis.questions.forEach((q, index) => {
@@ -161,8 +161,9 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         const allQuestions: { axisId: string, qId: string, text: string }[] = [];
         if (detailed) {
             Object.keys(surveyData).forEach(axisId => {
-                surveyData[axisId].questions.forEach(q => {
-                    headers.push(`(${surveyData[axisId].title}) ${q.id}: ${q.text.substring(0,50)}...`);
+                const axis = surveyData[axisId as keyof typeof surveyData];
+                axis.questions.forEach(q => {
+                    headers.push(`(${axis.title}) ${q.id}: ${q.text.substring(0,50)}...`);
                     allQuestions.push({axisId, qId: q.id, text: q.text});
                 });
             });
@@ -182,7 +183,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                 allQuestions.forEach(({axisId, qId}) => {
                     const axisAnswers = result.answers[axisId as keyof typeof result.answers];
                     const answer = axisAnswers ? axisAnswers[qId] : 'N/A';
-                    const questionData = surveyData[axisId].questions.find(q => q.id === qId);
+                    const questionData = surveyData[axisId as keyof typeof surveyData].questions.find(q => q.id === qId);
                     const option = questionData?.options.find(opt => `L${opt.score}` === answer);
                     row.push(`"${option ? option.text.replace(/"/g, '""') : 'لم تتم الإجابة'}"`);
                 });
@@ -196,7 +197,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `SANDA_Data_${detailed ? 'Detailed' : 'Summary'}.csv`);
+        link.setAttribute("download", `SANDA_Data_${detailed ? 'Detailed' : 'Summary'}_${new Date().toISOString()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -214,7 +215,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                     <RadioGroup value={exportType} onValueChange={setExportType} className="flex gap-4">
                         <div className="flex items-center space-x-2 space-x-reverse">
                             <RadioGroupItem value="excel" id="excel" />
-                            <Label htmlFor="excel">قاعدة البيانات الكاملة (Excel)</Label>
+                            <Label htmlFor="excel">قاعدة البيانات الكاملة (CSV)</Label>
                         </div>
                         <div className="flex items-center space-x-2 space-x-reverse">
                             <RadioGroupItem value="pdf" id="pdf" />
@@ -467,5 +468,7 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
     </div>
   );
 }
+
+    
 
     
