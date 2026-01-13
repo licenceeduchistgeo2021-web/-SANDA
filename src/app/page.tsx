@@ -43,7 +43,7 @@ export default function Home() {
     return (
         <div className="bg-background text-foreground">
             {stage === 'landing' && <Landing onStartAudit={handleStartAudit} onGoToComparison={handleGoToComparison} />}
-            {stage === 'audit' && <Audit governorate={selectedGovernorate} onFinishAudit={handleFinishAudit} />}
+            {stage === 'audit' && <Audit governorate={selectedGovernorate} onFinishAudit={handleFinishAudit} onBackToHome={handleRestart} />}
             {stage === 'results' && finalAnswers && (
                 <Results
                     governorate={selectedGovernorate}

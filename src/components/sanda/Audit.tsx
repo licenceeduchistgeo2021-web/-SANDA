@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle, Download } from 'lucide-react';
+import { HelpCircle, Download, Home as HomeIcon } from 'lucide-react';
 import { surveyData, scientificNotes, Axis, Question } from '@/lib/sanda-data';
 import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
@@ -17,6 +17,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 type AuditProps = {
   governorate: string;
   onFinishAudit: (answers: Answers) => void;
+  onBackToHome: () => void;
 };
 
 const axisOrder: (keyof typeof surveyData)[] = ['axis1', 'axis2', 'axis3', 'axis4'];
@@ -74,7 +75,7 @@ function calculateAxisScore(axisId: keyof typeof surveyData, answers: Answers) {
 }
 
 
-export default function Audit({ governorate, onFinishAudit }: AuditProps) {
+export default function Audit({ governorate, onFinishAudit, onBackToHome }: AuditProps) {
   const [currentAxisIndex, setCurrentAxisIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({
     axis1: {},
@@ -404,11 +405,19 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
-      <header className="max-w-5xl mx-auto text-center mb-8">
-        <p className="text-sm text-muted-foreground">
-          رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
-        </p>
-        <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
+      <header className="max-w-5xl mx-auto mb-8 relative">
+        <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+            رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
+            </p>
+            <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
+        </div>
+        <div className="absolute top-0 right-0">
+             <Button onClick={onBackToHome} variant="outline">
+                <HomeIcon className="ml-2 h-4 w-4" />
+                العودة للرئيسية
+             </Button>
+        </div>
       </header>
       
       <main className="max-w-5xl mx-auto bg-card p-6 md:p-8 rounded-xl shadow-lg border">
