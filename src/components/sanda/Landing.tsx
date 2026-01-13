@@ -48,6 +48,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     const [exportType, setExportType] = useState('excel');
     const [contentLevel, setContentLevel] = useState('summary');
     const [selectedGov, setSelectedGov] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (results.length > 0 && !selectedGov) {
@@ -55,7 +56,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         }
     }, [results, selectedGov]);
 
-     const handlePrintReport = (result: AuditResult) => {
+    const handlePrintReport = (result: AuditResult) => {
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             toast({ variant: 'destructive', title: "لا يمكن فتح نافذة الطباعة. يرجى تعطيل مانع النوافذ المنبثقة." });
@@ -77,7 +78,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                         .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 2rem; }
                         .print-header img { max-height: 75px; }
                         .print-header div { text-align: center; }
-                        h1 { font-size: 24px; font-weight: bold; color: #1a5f7a; }
+                        h1 { font-size: 22px; font-weight: bold; color: #1a5f7a; }
                         h2 { font-size: 20px; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
                         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
@@ -88,31 +89,33 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                 </head>
                 <body>
                     <div class="print-header">
-                         <img src="/faculty_logo.png" alt="Faculty Logo" />
+                         <img src="/faculty_logo.png" alt="FLSHM Logo" />
                          <div>
-                            <h1>تقرير تقييم الصمود الرقمي الشامل</h1>
+                            <h1>Master SANDA - University Hassan II</h1>
+                            <p style="font-size:1.2rem;"><strong>تقرير تقييم الصمود الرقمي الشامل</strong></p>
                             <p><strong>العمالة:</strong> ${result.governorate}</p>
+                            <p><strong>الطالب الباحث:</strong> محمد لعرانتي</p>
                             <p><strong>تاريخ التقرير:</strong> ${today}</p>
                          </div>
-                         <img src="/master_logo.png" alt="Master's Program Logo" />
+                         <img src="/master_logo.png" alt="Master SANDA Logo" />
                     </div>
         `;
         
         reportContent += `
-            <h2>ملخص النتائج</h2>
+            <h2>القسم 1: ملخص النتائج ومؤشر الصمود النهائي</h2>
             <table>
               <tr><th>المحور</th><th>النتيجة</th></tr>
               <tr><td>المحور الأول: الفهم</td><td>${result.scores.axis1.toFixed(2)}</td></tr>
               <tr><td>المحور الثاني: الحوكمة</td><td>${result.scores.axis2.toFixed(2)}</td></tr>
               <tr><td>المحور الثالث: الاستثمار</td><td>${result.scores.axis3.toFixed(2)}</td></tr>
               <tr><td>المحور الرابع: الاستعداد</td><td>${result.scores.axis4.toFixed(2)}</td></tr>
-              <tr><th>المؤشر النهائي للصمود</th><th>${result.total.toFixed(2)}</th></tr>
+              <tr><th style="font-weight:bold; font-size: 1.1rem;">المؤشر النهائي للصمود</th><th style="font-weight:bold; font-size: 1.1rem;">${result.total.toFixed(2)}</th></tr>
             </table>
         `;
         
         Object.keys(surveyData).forEach(axisId => {
             const axis = surveyData[axisId as keyof typeof surveyData];
-            reportContent += `<h2 class="page-break">${axis.title}</h2>`;
+            reportContent += `<h2 class="page-break">القسم 2: الأجوبة التفصيلية - ${axis.title}</h2>`;
             reportContent += `<table><thead><tr><th>السؤال</th><th>الإجابة المختارة</th><th>المستوى</th></tr></thead><tbody>`;
             axis.questions.forEach((q, index) => {
                 const answerValue = result.answers[axisId as keyof typeof result.answers]?.[q.id];
@@ -139,7 +142,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         setTimeout(() => {
              printWindow.print();
              printWindow.close();
-        }, 500);
+        }, 1000);
     };
 
     const handleExport = () => {
@@ -148,31 +151,31 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
             return;
         }
         
-        if (exportType === 'pdf') {
-             if (!selectedGov) {
-                toast({ variant: 'destructive', title: "الرجاء اختيار عمالة لتصدير تقريرها."});
-                return;
-             }
-             const resultToPrint = results.find(r => r.governorate === selectedGov);
-             if (resultToPrint) {
-                toast({ title: 'جاري تحضير التقرير...', description: 'سيتم فتح نافذة الطباعة قريباً.' });
-                handlePrintReport(resultToPrint);
-             } else {
-                toast({ variant: 'destructive', title: "لم يتم العثور على بيانات للعمالة المختارة."});
-             }
-        } else {
-            handleExportCsv(contentLevel === 'detailed');
-        }
+        setIsLoading(true);
+        toast({ title: 'جاري تحضير الملف...', description: 'سيبدأ التنزيل قريباً.' });
+
+        setTimeout(() => {
+            if (exportType === 'pdf') {
+                 if (!selectedGov) {
+                    toast({ variant: 'destructive', title: "الرجاء اختيار عمالة لتصدير تقريرها."});
+                    setIsLoading(false);
+                    return;
+                 }
+                 const resultToPrint = results.find(r => r.governorate === selectedGov);
+                 if (resultToPrint) {
+                    handlePrintReport(resultToPrint);
+                 } else {
+                    toast({ variant: 'destructive', title: "لم يتم العثور على بيانات للعمالة المختارة."});
+                 }
+            } else {
+                handleExportCsv(contentLevel === 'detailed');
+            }
+            setIsLoading(false);
+        }, 1000);
     };
     
      const handleExportCsv = (detailed: boolean) => {
-        if (results.length === 0) {
-            toast({ variant: "destructive", title: "لا توجد بيانات للتصدير." });
-            return;
-        }
-        toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
-
-        let headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد" ];
+        let headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد", "تاريخ التسجيل" ];
         const allQuestions: { axisId: string, qId: string, text: string }[] = [];
         
         if (detailed) {
@@ -186,6 +189,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         }
 
         const rows = results.map(result => {
+            const timestamp = new Date(result.timestamp).toLocaleString('ar-EG');
             const row = [
                 `"${result.governorate}"`,
                 result.total.toFixed(2),
@@ -193,6 +197,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                 result.scores.axis2.toFixed(2),
                 result.scores.axis3.toFixed(2),
                 result.scores.axis4.toFixed(2),
+                `"${timestamp}"`
             ];
 
             if (detailed) {
@@ -213,7 +218,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `SANDA_Data_${detailed ? 'Detailed' : 'Summary'}_${new Date().toISOString()}.csv`);
+        link.setAttribute("download", `SANDA_Data_${detailed ? 'Detailed' : 'Summary'}_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -272,7 +277,9 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                     </div>
                 )}
             </div>
-            <Button onClick={handleExport} className="w-full">تصدير</Button>
+            <Button onClick={handleExport} className="w-full" disabled={isLoading}>
+                 {isLoading ? 'جاري التحضير...' : 'تصدير'}
+            </Button>
         </DialogContent>
     );
 };
@@ -314,7 +321,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
             ) : (
               <img
                 src="/faculty_logo.png"
-                alt="University Logo"
+                alt="FLSHM Logo"
                 className="rounded-full hidden md:block"
                 style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
                 onError={() => setFacultyLogoError(true)}
@@ -338,7 +345,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               ) : (
                 <img
                   src="/master_logo.png"
-                  alt="Master's Program Logo"
+                  alt="Master SANDA Logo"
                   className="rounded-full hidden md:block"
                   style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
                   onError={() => setMasterLogoError(true)}

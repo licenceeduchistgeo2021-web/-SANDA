@@ -93,7 +93,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
       const timer = setTimeout(() => {
         window.print();
         setPrintData(null);
-      }, 100);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [printData]);
@@ -241,14 +241,15 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                 ) : (
                   <img
                     src="/faculty_logo.png"
-                    alt="University Logo"
+                    alt="FLSHM Logo"
                     style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
                     onError={() => setFacultyLogoError(true)}
                   />
                 )}
                 <div>
-                    <h1 className="text-3xl font-bold text-primary">تقرير تقييم الصمود الرقمي المفصل</h1>
+                    <h1 className="text-2xl font-bold text-primary">تقرير تقييم الصمود الرقمي - Master SANDA</h1>
                     <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
+                    <p className="text-md"><strong>الطالب الباحث:</strong> محمد لعرانتي</p>
                     <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
                 </div>
                 {masterLogoError ? (
@@ -256,7 +257,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                 ) : (
                   <img
                     src="/master_logo.png"
-                    alt="Master's Program Logo"
+                    alt="Master SANDA Logo"
                     style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
                     onError={() => setMasterLogoError(true)}
                   />
