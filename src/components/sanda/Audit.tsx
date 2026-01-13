@@ -110,7 +110,12 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
   };
 
   const handleNext = () => {
-    if (!isCurrentAxisComplete) return;
+    if (!isCurrentAxisComplete) {
+      const unanswered = questions.filter(q => !answers[currentAxisId][q.id]);
+      const unansweredNumbers = unanswered.map(q => q.id.replace('q', ''));
+      alert(`الرجاء الإجابة على جميع الأسئلة للمتابعة. الأسئلة المتبقية: ${unansweredNumbers.join(', ')}`);
+      return;
+    }
 
     if (currentAxisIndex < axisOrder.length - 1) {
       setShowMiniAnalysis(true);
@@ -139,7 +144,41 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
   };
   
   const findNoteForTerm = (text: string) => {
-    return Object.entries(scientificNotes).find(([term]) => text.includes(term));
+    const terms = Object.keys(scientificNotes);
+    const foundTerm = terms.find(term => new RegExp(`\\b${term}\\b`, 'i').test(text));
+    return foundTerm ? [foundTerm, scientificNotes[foundTerm]] : null;
+  };
+
+  const renderQuestionText = (text: string) => {
+    const terms = Object.keys(scientificNotes);
+    const regex = new RegExp(`(${terms.join('|')})`, 'gi');
+    
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      const termInfo = scientificNotes[part.toUpperCase() as keyof typeof scientificNotes];
+      if (termInfo) {
+        return (
+          <TooltipProvider key={index}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-primary font-bold cursor-help underline decoration-dotted">
+                  {part}
+                  <sup className="inline-flex align-top cursor-help mr-1 text-primary/50">
+                    <HelpCircle size={14} />
+                  </sup>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs text-right" side="top" dir="rtl">
+                <p className="font-bold">{part.toUpperCase()}</p>
+                <p>{termInfo}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
   };
   
   const axisScore = useMemo(() => calculateAxisScore(currentAxisId, answers), [currentAxisId, answers]);
@@ -240,27 +279,14 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
 
           <div className="space-y-8">
             {questions.map((q, index) => {
-              const noteEntry = findNoteForTerm(q.text);
+              const isAnswered = !!answers[currentAxisId as keyof Answers][q.id];
+              const questionContainerClasses = `border-b pb-6 ${!isAnswered && !isCurrentAxisComplete && currentAxisAnsweredCount > 0 ? 'border-red-500' : ''}`;
+
               return (
-                <div key={q.id} className="border-b pb-6">
+                <div key={q.id} className={questionContainerClasses}>
                   <h3 className="text-lg font-semibold mb-4 flex items-start">
                     <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-sm ml-3 shrink-0">{index + 1}</span>
-                    {q.text}
-                    {noteEntry && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <sup className="inline-flex align-top cursor-help mr-1 text-primary/50">
-                              <HelpCircle size={14} />
-                            </sup>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs text-right" side="top" dir="rtl">
-                            <p className="font-bold">{noteEntry[0]}</p>
-                            <p>{noteEntry[1]}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                    {renderQuestionText(q.text)}
                   </h3>
                   <RadioGroup
                     dir="rtl"
@@ -286,7 +312,7 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
             <Button onClick={handleBack} disabled={currentAxisIndex === 0} variant="outline">
               السابق
             </Button>
-            <Button onClick={handleNext} disabled={!isCurrentAxisComplete} className='bg-accent hover:bg-accent/90 text-accent-foreground'>
+            <Button onClick={handleNext} className='bg-accent hover:bg-accent/90 text-accent-foreground'>
               {currentAxisIndex === axisOrder.length - 1 ? 'إنهاء وعرض النتائج النهائية' : 'تحليل المحور والانتقال للتالي'}
             </Button>
           </div>
