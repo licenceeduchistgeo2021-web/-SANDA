@@ -7,6 +7,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import {
   Select,
@@ -15,8 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building, Map, FileDown, BarChart, CheckCircle } from 'lucide-react';
+import { Building, Map, FileText, BarChart, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import type { AuditResult } from '@/components/sanda/Results';
+import { useToast } from '@/hooks/use-toast';
+
 
 const governorates = [
   'عمالة سيدي البرنوصي',
@@ -34,6 +37,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
   const [completedAudits, setCompletedAudits] = useState<string[]>([]);
   const [facultyLogoError, setFacultyLogoError] = useState(false);
   const [masterLogoError, setMasterLogoError] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -53,6 +57,57 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
         onStartAudit(selectedGovernorate);
     }
   };
+  
+  const handleExportCsv = () => {
+    let results: AuditResult[] = [];
+    try {
+        const storedResultsRaw = localStorage.getItem('sandaAuditResults');
+        if (storedResultsRaw) {
+            results = JSON.parse(storedResultsRaw);
+        }
+    } catch (error) {
+        console.error("Failed to load results from localStorage", error);
+        toast({
+            variant: "destructive",
+            title: 'خطأ في تحميل البيانات',
+            description: 'لم نتمكن من قراءة بيانات التدقيق من التخزين المحلي.'
+        });
+        return;
+    }
+
+    if (results.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "لا توجد بيانات للتصدير",
+            description: "يرجى إكمال تدقيق واحد على الأقل قبل محاولة التصدير."
+        });
+        return;
+    }
+
+    toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
+
+    const headers = "العمالة،مؤشر الفهم،مؤشر الحوكمة،مؤشر الاستثمار،مؤشر الاستعداد،المؤشر النهائي";
+    const rows = results.map(r => 
+        [
+            `"${r.governorate}"`,
+            r.scores.axis1.toFixed(2),
+            r.scores.axis2.toFixed(2),
+            r.scores.axis3.toFixed(2),
+            r.scores.axis4.toFixed(2),
+            r.total.toFixed(2)
+        ].join(',')
+    );
+    
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers, ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "SANDA_Data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -155,7 +210,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
 
         <section>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center hover:shadow-xl transition-shadow duration-300">
+            <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
                 <div className="mx-auto bg-primary/10 rounded-full p-4 w-fit mb-4">
                   <Building className="h-8 w-8 text-primary" />
@@ -164,13 +219,13 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                   مقارنة العمالات
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <p className="text-muted-foreground">
                   تحليل إحصائي للفوارق في مستويات الصمود.
                 </p>
               </CardContent>
             </Card>
-            <Card className="text-center hover:shadow-xl transition-shadow duration-300">
+            <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
                 <div className="mx-auto bg-primary/10 rounded-full p-4 w-fit mb-4">
                   <Map className="h-8 w-8 text-primary" />
@@ -179,26 +234,36 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                   الخرائط الهندسية
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <p className="text-muted-foreground">
                   عرض النطاقات الجغرافية للمخاطر وفق تقنيات GIS.
                 </p>
               </CardContent>
             </Card>
-            <Card className="text-center hover:shadow-xl transition-shadow duration-300">
+            <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
                 <div className="mx-auto bg-primary/10 rounded-full p-4 w-fit mb-4">
-                  <FileDown className="h-8 w-8 text-primary" />
+                  <Download className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle className="text-xl font-bold">
                   استخراج البيانات
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
+              <CardContent className="flex-grow">
+                <p className="text-muted-foreground mb-4">
                   تحميل التقارير النهائية بصيغة PDF و Excel.
                 </p>
               </CardContent>
+              <CardFooter className="flex flex-col sm:flex-row gap-2 justify-center">
+                 <Button onClick={onGoToComparison} variant="outline" className="w-full">
+                    <FileText className="ml-2 h-4 w-4" />
+                    تحميل PDF
+                </Button>
+                <Button onClick={handleExportCsv} variant="outline" className="w-full">
+                    <FileSpreadsheet className="ml-2 h-4 w-4" />
+                    تصدير Excel
+                </Button>
+              </CardFooter>
             </Card>
           </div>
         </section>
