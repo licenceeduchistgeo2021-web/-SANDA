@@ -71,6 +71,7 @@ export type AuditResult = {
   };
   total: number;
   timestamp: number;
+  answers: Answers;
 };
 
 type ResultsProps = {
@@ -132,7 +133,8 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
                 axis4: score4,
             },
             total: totalScore,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            answers: answers,
         };
 
         const existingResultsRaw = localStorage.getItem('sandaAuditResults');
@@ -150,7 +152,7 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
     } catch (error) {
         console.error("Failed to save results to localStorage", error);
     }
-  }, [governorate, score1, score2, score3, score4, totalScore, toast]);
+  }, [governorate, score1, score2, score3, score4, totalScore, toast, answers]);
 
   const handlePrint = () => {
     toast({ title: 'جاري تحضير الملف...', description: 'سيتم فتح نافذة الطباعة قريباً.' });
@@ -375,3 +377,5 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
     </div>
   );
 }
+
+    

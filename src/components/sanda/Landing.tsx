@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ import {
 import { Building, Map, FileText, BarChart, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import type { AuditResult } from '@/components/sanda/Results';
 import { useToast } from '@/hooks/use-toast';
+import { surveyData } from '@/lib/sanda-data';
 
 
 const governorates = [
@@ -58,55 +60,79 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
     }
   };
   
-  const handleExportCsv = () => {
-    let results: AuditResult[] = [];
-    try {
-        const storedResultsRaw = localStorage.getItem('sandaAuditResults');
-        if (storedResultsRaw) {
-            results = JSON.parse(storedResultsRaw);
+    const handleExportCsv = () => {
+        let results: AuditResult[] = [];
+        try {
+            const storedResultsRaw = localStorage.getItem('sandaAuditResults');
+            if (storedResultsRaw) {
+                results = JSON.parse(storedResultsRaw);
+            }
+        } catch (error) {
+            console.error("Failed to load results from localStorage", error);
+            toast({
+                variant: "destructive",
+                title: 'خطأ في تحميل البيانات',
+                description: 'لم نتمكن من قراءة بيانات التدقيق من التخزين المحلي.'
+            });
+            return;
         }
-    } catch (error) {
-        console.error("Failed to load results from localStorage", error);
-        toast({
-            variant: "destructive",
-            title: 'خطأ في تحميل البيانات',
-            description: 'لم نتمكن من قراءة بيانات التدقيق من التخزين المحلي.'
+
+        if (results.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "لا توجد بيانات للتصدير",
+                description: "يرجى إكمال تدقيق واحد على الأقل قبل محاولة التصدير."
+            });
+            return;
+        }
+
+        toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
+
+        const headers = [
+            "العمالة", "المؤشر النهائي",
+            "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد"
+        ];
+
+        const allQuestions: { axisId: string, qId: string, text: string }[] = [];
+        Object.keys(surveyData).forEach(axisId => {
+            surveyData[axisId].questions.forEach(q => {
+                headers.push(`(${axisId}) ${q.id}: ${q.text.substring(0,50)}...`);
+                allQuestions.push({axisId, qId: q.id, text: q.text});
+            });
         });
-        return;
-    }
 
-    if (results.length === 0) {
-        toast({
-            variant: "destructive",
-            title: "لا توجد بيانات للتصدير",
-            description: "يرجى إكمال تدقيق واحد على الأقل قبل محاولة التصدير."
+        const rows = results.map(result => {
+            const row = [
+                `"${result.governorate}"`,
+                result.total.toFixed(2),
+                result.scores.axis1.toFixed(2),
+                result.scores.axis2.toFixed(2),
+                result.scores.axis3.toFixed(2),
+                result.scores.axis4.toFixed(2),
+            ];
+
+            allQuestions.forEach(({axisId, qId}) => {
+                const axisAnswers = result.answers[axisId as keyof typeof result.answers];
+                const answer = axisAnswers ? axisAnswers[qId] : 'N/A';
+                
+                const questionData = surveyData[axisId].questions.find(q => q.id === qId);
+                const option = questionData?.options.find(opt => `L${opt.score}` === answer);
+                
+                row.push(`"${option ? option.text.replace(/"/g, '""') : 'لم تتم الإجابة'}"`);
+            });
+            
+            return row.join(',');
         });
-        return;
-    }
-
-    toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
-
-    const headers = "العمالة،مؤشر الفهم،مؤشر الحوكمة،مؤشر الاستثمار،مؤشر الاستعداد،المؤشر النهائي";
-    const rows = results.map(r => 
-        [
-            `"${r.governorate}"`,
-            r.scores.axis1.toFixed(2),
-            r.scores.axis2.toFixed(2),
-            r.scores.axis3.toFixed(2),
-            r.scores.axis4.toFixed(2),
-            r.total.toFixed(2)
-        ].join(',')
-    );
-    
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers, ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "SANDA_Data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+        
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "SANDA_Full_Data.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
 
   return (
@@ -271,3 +297,5 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
     </div>
   );
 }
+
+    
