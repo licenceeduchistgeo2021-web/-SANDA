@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Building, Map, FileDown } from 'lucide-react';
-import Image from 'next/image';
 
 const governorates = [
   'عمالة سيدي البرنوصي',
@@ -30,6 +29,8 @@ type LandingProps = {
 
 export default function Landing({ onStartAudit }: LandingProps) {
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>('');
+  const [facultyLogoError, setFacultyLogoError] = useState(false);
+  const [masterLogoError, setMasterLogoError] = useState(false);
 
   const handleStart = () => {
     if (selectedGovernorate) {
@@ -42,15 +43,22 @@ export default function Landing({ onStartAudit }: LandingProps) {
       <main className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <div className="flex justify-center items-center gap-4 md:gap-8 mb-6">
-            <Image
-              src="/faculty_logo.png"
-              alt="University Logo"
-              width={100}
-              height={100}
-              className="rounded-full hidden md:block"
-              style={{maxHeight: '75px', width: 'auto'}}
-              data-ai-hint="university logo"
-            />
+            
+            {facultyLogoError ? (
+              <span className="font-bold">LOGO_FLSHM</span>
+            ) : (
+              <img
+                src="/faculty_logo.png"
+                alt="University Logo"
+                width={100}
+                height={100}
+                className="rounded-full hidden md:block"
+                style={{maxHeight: '75px', width: 'auto'}}
+                data-ai-hint="university logo"
+                onError={() => setFacultyLogoError(true)}
+              />
+            )}
+
             <div className='flex flex-col gap-2'>
               <h1 className="text-3xl md:text-5xl font-bold text-primary">
                 أداة التدقيق الرقمي SANDA
@@ -62,15 +70,22 @@ export default function Landing({ onStartAudit }: LandingProps) {
                 المحمدية - جامعة الحسن الثاني.
               </p>
             </div>
-            <Image
-              src="/master_logo.png"
-              alt="Master's Program Logo"
-              width={100}
-              height={100}
-              className="rounded-full hidden md:block"
-              style={{maxHeight: '75px', width: 'auto'}}
-              data-ai-hint="program logo"
-            />
+            
+            {masterLogoError ? (
+                <span className="font-bold">LOGO_MASTER</span>
+              ) : (
+                <img
+                  src="/master_logo.png"
+                  alt="Master's Program Logo"
+                  width={100}
+                  height={100}
+                  className="rounded-full hidden md:block"
+                  style={{maxHeight: '75px', width: 'auto'}}
+                  data-ai-hint="program logo"
+                  onError={() => setMasterLogoError(true)}
+                />
+              )}
+
           </div>
         </header>
 

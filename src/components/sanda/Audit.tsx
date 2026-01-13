@@ -13,8 +13,6 @@ import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
 import {motion, AnimatePresence} from 'framer-motion'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import Image from 'next/image';
-
 
 type AuditProps = {
   governorate: string;
@@ -86,6 +84,8 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
   });
   const [showMiniAnalysis, setShowMiniAnalysis] = useState(false);
   const [printData, setPrintData] = useState<{axis: Axis; score: number; interpretation: {title: string, description: string}; answers: Answers[keyof Answers]} | null>(null);
+  const [facultyLogoError, setFacultyLogoError] = useState(false);
+  const [masterLogoError, setMasterLogoError] = useState(false);
 
     useEffect(() => {
     if (printData) {
@@ -217,13 +217,31 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
     return (
         <div className="print-container bg-white text-black p-8" dir="rtl">
             <header className="text-center border-b-2 border-black pb-4 mb-8 flex justify-between items-center">
-                <Image src="/faculty_logo.png" alt="Faculty Logo" width={100} height={100} style={{maxHeight: '75px', width: 'auto'}} />
+               {facultyLogoError ? (
+                  <span className="font-bold">LOGO_FLSHM</span>
+                ) : (
+                  <img
+                    src="/faculty_logo.png"
+                    alt="University Logo"
+                    style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
+                    onError={() => setFacultyLogoError(true)}
+                  />
+                )}
                 <div>
                     <h1 className="text-3xl font-bold text-primary">تقرير تقييم الصمود الرقمي المفصل</h1>
                     <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
                     <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
                 </div>
-                <Image src="/master_logo.png" alt="Master's Logo" width={100} height={100} style={{maxHeight: '75px', width: 'auto'}}/>
+                {masterLogoError ? (
+                  <span className="font-bold">LOGO_MASTER</span>
+                ) : (
+                  <img
+                    src="/master_logo.png"
+                    alt="Master's Program Logo"
+                    style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
+                    onError={() => setMasterLogoError(true)}
+                  />
+                )}
             </header>
             
             <section className="mb-8 page-break-after">
