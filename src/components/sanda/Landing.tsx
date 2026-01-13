@@ -56,6 +56,11 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     }, [results, selectedGov]);
 
     const handleExport = () => {
+        if (results.length === 0) {
+            toast({ variant: 'destructive', title: "لا توجد بيانات مسجلة حالياً." });
+            return;
+        }
+
         if (exportType === 'pdf' && !selectedGov) {
             toast({ variant: 'destructive', title: "الرجاء اختيار عمالة لتصدير تقريرها."});
             return;
@@ -70,7 +75,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     
     const handleExportCsv = (detailed: boolean) => {
         if (results.length === 0) {
-            toast({ variant: "destructive", title: "لا توجد بيانات للتصدير." });
+            toast({ variant: 'destructive', title: "لا توجد بيانات للتصدير." });
             return;
         }
         toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
@@ -81,7 +86,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         if (detailed) {
             Object.keys(surveyData).forEach(axisId => {
                 surveyData[axisId].questions.forEach(q => {
-                    headers.push(`(${axisId}) ${q.id}: ${q.text.substring(0,50)}...`);
+                    headers.push(`(${surveyData[axisId].title}) ${q.id}: ${q.text.substring(0,50)}...`);
                     allQuestions.push({axisId, qId: q.id, text: q.text});
                 });
             });
@@ -110,10 +115,11 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
             return row.join(',');
         });
         
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join("\n");
-        const encodedUri = encodeURI(csvContent);
+        const csvContent = "\uFEFF" + [headers.join(','), ...rows].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
         link.setAttribute("download", `SANDA_Data_${detailed ? 'Detailed' : 'Summary'}.csv`);
         document.body.appendChild(link);
         link.click();
@@ -157,19 +163,21 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                     </div>
                 )}
                 
-                <div>
-                    <Label className="font-bold mb-2 block">مستوى المحتوى</Label>
-                    <RadioGroup value={contentLevel} onValueChange={setContentLevel} className="flex gap-4">
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="summary" id="summary" />
-                            <Label htmlFor="summary">المؤشرات النهائية فقط</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="detailed" id="detailed" />
-                            <Label htmlFor="detailed">الأجوبة التفصيلية والتحليل</Label>
-                        </div>
-                    </RadioGroup>
-                </div>
+                {exportType === 'excel' && (
+                    <div>
+                        <Label className="font-bold mb-2 block">مستوى المحتوى</Label>
+                        <RadioGroup value={contentLevel} onValueChange={setContentLevel} className="flex gap-4">
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                                <RadioGroupItem value="summary" id="summary" />
+                                <Label htmlFor="summary">المؤشرات النهائية فقط</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                                <RadioGroupItem value="detailed" id="detailed" />
+                                <Label htmlFor="detailed">الأجوبة التفصيلية والتحليل</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                )}
             </div>
             <Button onClick={handleExport} className="w-full">تصدير</Button>
         </DialogContent>
@@ -216,7 +224,6 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                 alt="University Logo"
                 className="rounded-full hidden md:block"
                 style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
-                data-ai-hint="university logo"
                 onError={() => setFacultyLogoError(true)}
               />
             )}
@@ -241,7 +248,6 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                   alt="Master's Program Logo"
                   className="rounded-full hidden md:block"
                   style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
-                  data-ai-hint="program logo"
                   onError={() => setMasterLogoError(true)}
                 />
               )}
