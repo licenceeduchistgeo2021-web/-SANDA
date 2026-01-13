@@ -58,6 +58,18 @@ const abbreviations = {
     ],
 };
 
+export type AuditResult = {
+  governorate: string;
+  scores: {
+    axis1: number;
+    axis2: number;
+    axis3: number;
+    axis4: number;
+  };
+  total: number;
+  timestamp: number;
+};
+
 type ResultsProps = {
   governorate: string;
   answers: Answers;
@@ -102,6 +114,35 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
   const score2 = calculateAxisScore('axis2', answers);
   const score3 = calculateAxisScore('axis3', answers);
   const score4 = calculateAxisScore('axis4', answers);
+  const totalScore = (score1 + score2 + score3 + score4) / 4;
+
+  useEffect(() => {
+    // Save to localStorage
+    try {
+        const newResult: AuditResult = {
+            governorate,
+            scores: {
+                axis1: score1,
+                axis2: score2,
+                axis3: score3,
+                axis4: score4,
+            },
+            total: totalScore,
+            timestamp: Date.now()
+        };
+
+        const existingResultsRaw = localStorage.getItem('sandaAuditResults');
+        const existingResults: AuditResult[] = existingResultsRaw ? JSON.parse(existingResultsRaw) : [];
+        
+        // Remove previous result for the same governorate to keep only the latest
+        const filteredResults = existingResults.filter(r => r.governorate !== governorate);
+        
+        const updatedResults = [...filteredResults, newResult];
+        localStorage.setItem('sandaAuditResults', JSON.stringify(updatedResults));
+    } catch (error) {
+        console.error("Failed to save results to localStorage", error);
+    }
+  }, [governorate, score1, score2, score3, score4, totalScore]);
 
   const scores = [
       { axis: 'الفهم', score: score1, badge: 'MHA | GIS', analysis: 'يقيس القدرة على النمذجة العلمية وتوقع المخاطر بناءً على بيانات DesInventar وتوقعات GIEC.', class: 'axis-1' },

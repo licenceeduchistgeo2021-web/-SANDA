@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Landing from '@/components/sanda/Landing';
 import Audit from '@/components/sanda/Audit';
 import Results from '@/components/sanda/Results';
+import Comparison from '@/components/sanda/Comparison';
 
 export type Answers = {
     axis1: { [key: string]: string };
@@ -12,7 +13,7 @@ export type Answers = {
     axis4: { [key: string]: string };
 };
 
-type Stage = 'landing' | 'audit' | 'results';
+export type Stage = 'landing' | 'audit' | 'results' | 'comparison';
 
 export default function Home() {
     const [stage, setStage] = useState<Stage>('landing');
@@ -35,9 +36,13 @@ export default function Home() {
         setStage('landing');
     };
 
+    const handleGoToComparison = () => {
+        setStage('comparison');
+    }
+
     return (
         <div className="bg-background text-foreground">
-            {stage === 'landing' && <Landing onStartAudit={handleStartAudit} />}
+            {stage === 'landing' && <Landing onStartAudit={handleStartAudit} onGoToComparison={handleGoToComparison} />}
             {stage === 'audit' && <Audit governorate={selectedGovernorate} onFinishAudit={handleFinishAudit} />}
             {stage === 'results' && finalAnswers && (
                 <Results
@@ -46,6 +51,7 @@ export default function Home() {
                     onRestart={handleRestart}
                 />
             )}
+            {stage === 'comparison' && <Comparison onBackToLanding={handleRestart} />}
         </div>
     );
 }

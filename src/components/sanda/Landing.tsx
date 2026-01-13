@@ -7,6 +7,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import {
   Select,
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building, Map, FileDown } from 'lucide-react';
+import { Building, Map, FileDown, BarChart } from 'lucide-react';
 
 const governorates = [
   'عمالة سيدي البرنوصي',
@@ -25,9 +26,10 @@ const governorates = [
 
 type LandingProps = {
   onStartAudit: (governorate: string) => void;
+  onGoToComparison: () => void;
 };
 
-export default function Landing({ onStartAudit }: LandingProps) {
+export default function Landing({ onStartAudit, onGoToComparison }: LandingProps) {
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>('');
   const [facultyLogoError, setFacultyLogoError] = useState(false);
   const [masterLogoError, setMasterLogoError] = useState(false);
@@ -121,6 +123,16 @@ export default function Landing({ onStartAudit }: LandingProps) {
               ابدأ التدقيق الجديد
             </Button>
           </div>
+           <div className="mt-4 border-t pt-4">
+             <Button
+              onClick={onGoToComparison}
+              className="w-full h-12 px-8 text-lg"
+              variant="outline"
+            >
+              <BarChart className="ml-2 h-5 w-5" />
+              الانتقال إلى لوحة المقارنة
+            </Button>
+           </div>
         </section>
 
         <section>
