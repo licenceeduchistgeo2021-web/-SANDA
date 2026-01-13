@@ -5,12 +5,6 @@ import Chart from 'chart.js/auto';
 import { Button } from '@/components/ui/button';
 import { Answers } from '@/app/page';
 
-type ResultsProps = {
-  governorate: string;
-  answers: Answers;
-  onRestart: () => void;
-};
-
 const axisWeights = {
     axis1: { q1: 1.5, q7: 1.5, q8: 1.4, q9: 1.4, default: 1.0 }, // الفهم
     axis2: { q3: 1.4, q5: 1.3, q11: 1.3, default: 1.0 },         // الحوكمة
@@ -64,6 +58,13 @@ const abbreviations = {
     ],
 };
 
+type ResultsProps = {
+  governorate: string;
+  answers: Answers;
+  onRestart: () => void;
+};
+
+
 function calculateAxisScore(axisId: keyof typeof axisWeights, answers: Answers) {
     let totalWeightedScore = 0;
     let totalWeights = 0;
@@ -73,7 +74,8 @@ function calculateAxisScore(axisId: keyof typeof axisWeights, answers: Answers) 
     if (!axisAnswers) return 0;
 
     const questions = Object.keys(axisAnswers);
-    const numQuestions = Math.min(questions.length, 20);
+    // Assuming 20 questions per axis based on the new structure
+    const numQuestions = 20;
 
 
     for (let i = 1; i <= numQuestions; i++) {
@@ -133,15 +135,16 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
               r: {
                 min: 0,
                 max: 5,
-                ticks: { stepSize: 1, backdropColor: 'transparent', color: '#666' },
-                grid: { color: '#e0e0e0' },
-                angleLines: { color: '#e0e0e0' },
-                pointLabels: { font: { size: 14, weight: 'bold', family: 'Tajawal' }, color: '#333' }
+                ticks: { stepSize: 1, backdropColor: 'transparent', color: 'hsl(var(--muted-foreground))' },
+                grid: { color: 'hsl(var(--border))' },
+                angleLines: { color: 'hsl(var(--border))' },
+                pointLabels: { font: { size: 14, weight: 'bold', family: 'Tajawal' }, color: 'hsl(var(--foreground))' }
               }
             },
             plugins: {
               legend: {
                 labels: {
+                  color: 'hsl(var(--foreground))',
                   font: {
                     size: 16,
                     family: 'Tajawal'
@@ -248,8 +251,8 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
             <h3 className="text-2xl font-bold text-center mb-6 text-primary">الأساس الإحصائي والهندسي للمؤشرات</h3>
              <div className="overflow-x-auto">
                 <table className="w-full text-right border-collapse">
-                    <thead>
-                        <tr className="bg-muted">
+                    <thead className='bg-muted'>
+                        <tr>
                             <th className="p-3 font-bold uppercase text-muted-foreground border border-border">المحور</th>
                             <th className="p-3 font-bold uppercase text-muted-foreground border border-border">الأساس الإحصائي المطبق</th>
                             <th className="p-3 font-bold uppercase text-muted-foreground border border-border">الهدف الهندسي</th>

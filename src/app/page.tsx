@@ -36,7 +36,7 @@ export default function Home() {
     };
 
     return (
-        <div>
+        <div className="bg-background text-foreground">
             {stage === 'landing' && <Landing onStartAudit={handleStartAudit} />}
             {stage === 'audit' && <Audit governorate={selectedGovernorate} onFinishAudit={handleFinishAudit} />}
             {stage === 'results' && finalAnswers && (
