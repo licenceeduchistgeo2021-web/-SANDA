@@ -156,7 +156,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         }
         toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
 
-        const headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد" ];
+        let headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد" ];
 
         const allQuestions: { axisId: string, qId: string, text: string }[] = [];
         if (detailed) {
@@ -268,6 +268,7 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
   const [minScores, setMinScores] = useState<{ [key: string]: number }>({});
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -284,17 +285,29 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
           });
           setMinScores(newMinScores);
         }
+      } else {
+        toast({
+            variant: "destructive",
+            title: "لا توجد بيانات",
+            description: "يرجى ملء ونشر بيانات عمالة واحدة على الأقل أولاً."
+        })
       }
     } catch (error) {
       console.error("Failed to load results from localStorage", error);
+      toast({
+            variant: "destructive",
+            title: "خطأ في تحميل البيانات",
+            description: "لم نتمكن من تحميل البيانات من الذاكرة المحلية."
+      })
     }
-  }, []);
+  }, [toast]);
 
   const handleClearData = () => {
     if (window.confirm("هل أنت متأكد من أنك تريد حذف جميع بيانات المقارنة؟ لا يمكن التراجع عن هذا الإجراء.")) {
         localStorage.removeItem('sandaAuditResults');
         setResults([]);
         setMinScores({});
+        toast({ title: "تم حذف جميع البيانات بنجاح."})
     }
   };
 
@@ -468,7 +481,3 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
     </div>
   );
 }
-
-    
-
-    

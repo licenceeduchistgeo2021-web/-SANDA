@@ -172,14 +172,14 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
         }
         toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
 
-        const headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد" ];
+        let headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد" ];
         const allQuestions: { axisId: string, qId: string, text: string }[] = [];
         
         if (detailed) {
             Object.keys(surveyData).forEach(axisId => {
                 const axis = surveyData[axisId as keyof typeof surveyData];
                 axis.questions.forEach(q => {
-                    headers.push(`(${axis.title}) ${q.id}: ${q.text.substring(0,50)}...`);
+                    headers.push(`"${axis.title.replace(/"/g, '""')}: ${q.id}: ${q.text.substring(0,50).replace(/"/g, '""')}..."`);
                     allQuestions.push({axisId, qId: q.id, text: q.text});
                 });
             });
@@ -464,7 +464,3 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
     </div>
   );
 }
-
-    
-
-    
