@@ -83,12 +83,12 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
         </div>
 
         <div className="space-y-8">
-          {questions.map((q) => {
+          {questions.map((q, index) => {
             const noteEntry = findNoteForTerm(q.text);
             return (
               <div key={q.id} className="border-b pb-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-start">
-                  <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-sm ml-3 shrink-0">{q.id.replace('q', '')}</span>
+                  <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-sm ml-3 shrink-0">{index + 1}</span>
                   {q.text}
                   {noteEntry && (
                      <TooltipProvider>
@@ -110,13 +110,13 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
                   dir="rtl"
                   value={answers[currentAxisId as keyof Answers][q.id]}
                   onValueChange={(value) => handleAnswerChange(q.id, value)}
-                  className="space-y-3"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4"
                 >
                   {q.options.map(opt => (
                     <div key={opt.score} className="flex items-center space-x-3 space-x-reverse p-2 rounded-md hover:bg-muted/50 transition-colors">
                       <RadioGroupItem value={`L${opt.score}`} id={`${q.id}-L${opt.score}`} />
                       <Label htmlFor={`${q.id}-L${opt.score}`} className="flex-1 text-base cursor-pointer">
-                        <span className="font-bold text-primary mr-2">[L{opt.score}]</span> {opt.text}
+                         {opt.text}
                       </Label>
                     </div>
                   ))}
