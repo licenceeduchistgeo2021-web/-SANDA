@@ -274,7 +274,7 @@ export const surveyData: { [key: string]: Axis } = {
     ],
   },
   axis2: {
-    title: 'المحور 2: الحوكمة',
+    title: 'المحور الثاني: الحوكمة (تقوية حوكمة مخاطر الكوارث لإدارة المخاطر)',
     icon: Landmark,
     questions: [
         {
@@ -500,7 +500,7 @@ export const surveyData: { [key: string]: Axis } = {
     ]
   },
   axis3: {
-    title: 'المحور 3: الاستثمار',
+    title: 'المحور الثالث: الاستثمار (الاستثمار في الحد من مخاطر الكوارث من أجل المرونة)',
     icon: TrendingUp,
     questions: [
       {
@@ -726,7 +726,7 @@ export const surveyData: { [key: string]: Axis } = {
     ],
   },
   axis4: {
-    title: 'المحور 4: الاستعداد',
+    title: 'المحور الرابع: الاستعداد (تعزيز الاستعداد للكوارث من أجل التصدي الفعال)',
     icon: ClipboardCheck,
     questions: [
       {
@@ -952,3 +952,5 @@ export const surveyData: { [key: string]: Axis } = {
     ],
   },
 };
+
+    
