@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
 } from '@/components/ui/card';
 import {
   Select,
@@ -16,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building, Map, FileDown, BarChart } from 'lucide-react';
+import { Building, Map, FileDown, BarChart, CheckCircle } from 'lucide-react';
+import type { AuditResult } from '@/components/sanda/Results';
 
 const governorates = [
   'عمالة سيدي البرنوصي',
@@ -31,8 +31,22 @@ type LandingProps = {
 
 export default function Landing({ onStartAudit, onGoToComparison }: LandingProps) {
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>('');
+  const [completedAudits, setCompletedAudits] = useState<string[]>([]);
   const [facultyLogoError, setFacultyLogoError] = useState(false);
   const [masterLogoError, setMasterLogoError] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedResultsRaw = localStorage.getItem('sandaAuditResults');
+      if (storedResultsRaw) {
+        const parsedResults: AuditResult[] = JSON.parse(storedResultsRaw);
+        setCompletedAudits(parsedResults.map(r => r.governorate));
+      }
+    } catch (error) {
+      console.error("Failed to load completed audits from localStorage", error);
+    }
+  }, []);
+
 
   const handleStart = () => {
     if (selectedGovernorate) {
@@ -52,10 +66,8 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               <img
                 src="/faculty_logo.png"
                 alt="University Logo"
-                width={100}
-                height={100}
                 className="rounded-full hidden md:block"
-                style={{maxHeight: '75px', width: 'auto'}}
+                style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
                 data-ai-hint="university logo"
                 onError={() => setFacultyLogoError(true)}
               />
@@ -79,10 +91,8 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                 <img
                   src="/master_logo.png"
                   alt="Master's Program Logo"
-                  width={100}
-                  height={100}
                   className="rounded-full hidden md:block"
-                  style={{maxHeight: '75px', width: 'auto'}}
+                  style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
                   data-ai-hint="program logo"
                   onError={() => setMasterLogoError(true)}
                 />
@@ -110,7 +120,15 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               <SelectContent>
                 {governorates.map((gov) => (
                   <SelectItem key={gov} value={gov} className="text-base">
-                    {gov}
+                     <div className="flex items-center justify-between w-full">
+                        <span>{gov}</span>
+                        {completedAudits.includes(gov) && (
+                          <span className="flex items-center gap-2 text-green-600">
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-xs">تم ملء الاستمارة</span>
+                          </span>
+                        )}
+                      </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -120,7 +138,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               disabled={!selectedGovernorate}
               className="w-full sm:w-auto h-12 px-8 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-              ابدأ التدقيق الجديد
+             {completedAudits.includes(selectedGovernorate) ? 'متابعة أو إعادة التقييم' : 'ابدأ التدقيق الجديد'}
             </Button>
           </div>
            <div className="mt-4 border-t pt-4">

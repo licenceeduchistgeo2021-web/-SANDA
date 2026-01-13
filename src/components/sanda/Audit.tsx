@@ -102,6 +102,28 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
     window.scrollTo(0, 0);
   }, [currentAxisIndex, showMiniAnalysis]);
 
+  useEffect(() => {
+    // Load answers from localStorage on component mount
+    try {
+      const savedAnswers = localStorage.getItem(`sanda-in-progress-audit-${governorate}`);
+      if (savedAnswers) {
+        setAnswers(JSON.parse(savedAnswers));
+      }
+    } catch (e) {
+      console.error("Failed to load answers from localStorage", e);
+    }
+  }, [governorate]);
+
+  useEffect(() => {
+    // Save answers to localStorage whenever they change
+    try {
+      localStorage.setItem(`sanda-in-progress-audit-${governorate}`, JSON.stringify(answers));
+    } catch (e) {
+      console.error("Failed to save answers to localStorage", e);
+    }
+  }, [answers, governorate]);
+
+
   const currentAxisId = axisOrder[currentAxisIndex];
   const currentAxis: Axis = surveyData[currentAxisId];
   const questions: Question[] = currentAxis.questions;
