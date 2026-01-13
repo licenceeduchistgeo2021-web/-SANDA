@@ -39,21 +39,113 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     const [contentLevel, setContentLevel] = useState('summary');
     const [selectedGov, setSelectedGov] = useState<string>('');
 
+    const handlePrintReport = (result: AuditResult) => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            toast({ variant: 'destructive', title: "لا يمكن فتح نافذة الطباعة. يرجى تعطيل مانع النوافذ المنبثقة." });
+            return;
+        }
+
+        const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        let reportContent = `
+            <html>
+                <head>
+                    <title>تقرير الصمود الرقمي - ${result.governorate}</title>
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Tajawal', sans-serif; direction: rtl; background-color: white; color: black; }
+                        @page { size: A4; margin: 20mm; }
+                        .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 2rem; }
+                        .print-header img { max-height: 75px; }
+                        .print-header div { text-align: center; }
+                        h1 { font-size: 24px; font-weight: bold; color: #1a5f7a; }
+                        h2 { font-size: 20px; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                        th { background-color: #f2f2f2; }
+                        tr { page-break-inside: avoid; }
+                        .page-break { page-break-before: always; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                         <img src="/faculty_logo.png" alt="University Logo" />
+                         <div>
+                            <h1>تقرير تقييم الصمود الرقمي الشامل</h1>
+                            <p><strong>العمالة:</strong> ${result.governorate}</p>
+                            <p><strong>تاريخ التقرير:</strong> ${today}</p>
+                         </div>
+                         <img src="/master_logo.png" alt="Master's Program Logo" />
+                    </div>
+        `;
+        
+        reportContent += `
+            <h2>ملخص النتائج</h2>
+            <table>
+              <tr><th>المحور</th><th>النتيجة</th></tr>
+              <tr><td>المحور الأول: الفهم</td><td>${result.scores.axis1.toFixed(2)}</td></tr>
+              <tr><td>المحور الثاني: الحوكمة</td><td>${result.scores.axis2.toFixed(2)}</td></tr>
+              <tr><td>المحور الثالث: الاستثمار</td><td>${result.scores.axis3.toFixed(2)}</td></tr>
+              <tr><td>المحور الرابع: الاستعداد</td><td>${result.scores.axis4.toFixed(2)}</td></tr>
+              <tr><th>المؤشر النهائي للصمود</th><th>${result.total.toFixed(2)}</th></tr>
+            </table>
+        `;
+        
+        Object.keys(surveyData).forEach(axisId => {
+            const axis = surveyData[axisId];
+            reportContent += `<h2 class="page-break">${axis.title}</h2>`;
+            reportContent += `<table><thead><tr><th>السؤال</th><th>الإجابة المختارة</th><th>المستوى</th></tr></thead><tbody>`;
+            axis.questions.forEach((q, index) => {
+                const answerValue = result.answers[axisId as keyof typeof result.answers]?.[q.id];
+                const selectedOption = q.options.find(opt => `L${opt.score}` === answerValue);
+                reportContent += `
+                    <tr>
+                        <td>${index + 1}. ${q.text}</td>
+                        <td>${selectedOption ? selectedOption.text : 'لم تتم الإجابة'}</td>
+                        <td>${answerValue || '-'}</td>
+                    </tr>
+                `;
+            });
+            reportContent += `</tbody></table>`;
+        });
+        
+        reportContent += `
+                </body>
+            </html>
+        `;
+
+        printWindow.document.write(reportContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+             printWindow.print();
+             printWindow.close();
+        }, 500);
+    };
+
     const handleExport = () => {
         if (results.length === 0) {
             toast({ variant: 'destructive', title: "لا توجد بيانات مسجلة حالياً." });
             return;
         }
         
-        if (exportType === 'pdf' && !selectedGov) {
-            toast({ variant: 'destructive', title: "الرجاء اختيار عمالة لتصدير تقريرها."});
-            return;
-        }
-
-        if (exportType === 'excel') {
-            handleExportCsv(contentLevel === 'detailed');
+        if (exportType === 'pdf') {
+             if (!selectedGov) {
+                toast({ variant: 'destructive', title: "الرجاء اختيار عمالة لتصدير تقريرها."});
+                return;
+             }
+             const resultToPrint = results.find(r => r.governorate === selectedGov);
+             if (resultToPrint) {
+                toast({ title: 'جاري تحضير التقرير...', description: 'سيتم فتح نافذة الطباعة قريباً.' });
+                handlePrintReport(resultToPrint);
+             } else {
+                toast({ variant: 'destructive', title: "لم يتم العثور على بيانات للعمالة المختارة."});
+             }
         } else {
-             toast({ variant: 'destructive', title: "تصدير PDF لتقرير شامل قيد التطوير."});
+            handleExportCsv(contentLevel === 'detailed');
         }
     };
     
