@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Landing from '@/components/sanda/Landing';
 import Audit from '@/components/sanda/Audit';
 import Results from '@/components/sanda/Results';
 import Comparison from '@/components/sanda/Comparison';
+import Login from '@/components/sanda/Login';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 export type Answers = {
     axis1: { [key: string]: string };
@@ -13,12 +16,46 @@ export type Answers = {
     axis4: { [key: string]: string };
 };
 
-export type Stage = 'landing' | 'audit' | 'results' | 'comparison';
+export type Stage = 'login' | 'landing' | 'audit' | 'results' | 'comparison';
 
 export default function Home() {
-    const [stage, setStage] = useState<Stage>('landing');
+    const [stage, setStage] = useState<Stage>('login');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [selectedGovernorate, setSelectedGovernorate] = useState<string>('');
     const [finalAnswers, setFinalAnswers] = useState<Answers | null>(null);
+    
+    useEffect(() => {
+        try {
+            const authStatus = sessionStorage.getItem('sanda-auth');
+            if (authStatus === 'true') {
+                setIsAuthenticated(true);
+                setStage('landing');
+            }
+        } catch (e) {
+            console.error("Failed to read auth status from sessionStorage", e);
+        }
+    }, []);
+
+
+    const handleLoginSuccess = () => {
+        setIsAuthenticated(true);
+        try {
+            sessionStorage.setItem('sanda-auth', 'true');
+        } catch (e) {
+             console.error("Failed to save auth status to sessionStorage", e);
+        }
+        setStage('landing');
+    };
+    
+    const handleLogout = () => {
+        setIsAuthenticated(false);
+         try {
+            sessionStorage.removeItem('sanda-auth');
+        } catch (e) {
+             console.error("Failed to remove auth status from sessionStorage", e);
+        }
+        setStage('login');
+    };
 
     const handleStartAudit = (governorate: string) => {
         setSelectedGovernorate(governorate);
@@ -40,8 +77,18 @@ export default function Home() {
         setStage('comparison');
     }
 
+    if (!isAuthenticated || stage === 'login') {
+        return <Login onLoginSuccess={handleLoginSuccess} />;
+    }
+
     return (
-        <div className="bg-background text-foreground">
+        <div className="bg-background text-foreground relative">
+             <div className="absolute top-4 left-4 z-50">
+                <Button onClick={handleLogout} variant="outline" size="sm">
+                    <LogOut className="ml-2 h-4 w-4" />
+                    تسجيل الخروج
+                </Button>
+            </div>
             {stage === 'landing' && <Landing onStartAudit={handleStartAudit} onGoToComparison={handleGoToComparison} />}
             {stage === 'audit' && <Audit governorate={selectedGovernorate} onFinishAudit={handleFinishAudit} onBackToHome={handleRestart} />}
             {stage === 'results' && finalAnswers && (
