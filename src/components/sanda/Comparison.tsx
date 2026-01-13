@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
@@ -6,7 +7,8 @@ import type { AuditResult } from '@/components/sanda/Results';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowRight, Trash2 } from 'lucide-react';
+import { ArrowRight, Trash2, Download } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type ComparisonProps = {
   onBackToLanding: () => void;
@@ -31,6 +33,7 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
   const [minScores, setMinScores] = useState<{ [key: string]: number }>({});
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -60,6 +63,36 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
         setMinScores({});
     }
   };
+
+  const handleExportCsv = () => {
+    if (results.length === 0) {
+        alert("لا توجد بيانات للتصدير.");
+        return;
+    }
+    toast({ title: 'جاري تحضير الملف...', description: 'سيتم تنزيل ملف CSV قريباً.' });
+
+    const headers = "العمالة،مؤشر الفهم،مؤشر الحوكمة،مؤشر الاستثمار،مؤشر الاستعداد،المؤشر النهائي";
+    const rows = results.map(r => 
+        [
+            `"${r.governorate}"`,
+            r.scores.axis1.toFixed(2),
+            r.scores.axis2.toFixed(2),
+            r.scores.axis3.toFixed(2),
+            r.scores.axis4.toFixed(2),
+            r.total.toFixed(2)
+        ].join(',')
+    );
+    
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers, ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "SANDA_Data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 
   useEffect(() => {
     if (chartRef.current && results.length > 0) {
@@ -179,7 +212,11 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
                 <p className="text-center text-muted-foreground py-8">لا توجد بيانات محفوظة للمقارنة. يرجى إكمال تدقيق واحد على الأقل.</p>
             )}
              {results.length > 0 && (
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-end gap-2">
+                     <Button onClick={handleExportCsv} variant="outline">
+                        <Download className="ml-2 h-4 w-4" />
+                        تصدير كملف CSV
+                    </Button>
                     <Button onClick={handleClearData} variant="destructive">
                         <Trash2 className="ml-2 h-4 w-4" />
                         حذف جميع البيانات

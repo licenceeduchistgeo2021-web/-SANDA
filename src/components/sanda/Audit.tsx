@@ -232,11 +232,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     const { axis, score, interpretation: interp, answers: axisAnswers } = printData;
     const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
     const maturityPercent = (score / 5) * 100;
-    const printChartData = [
-        { name: 'Score', value: maturityPercent },
-        { name: 'Remaining', value: 100 - maturityPercent },
-    ];
-
+    
     return (
         <div className="print-container bg-white text-black p-8" dir="rtl">
             <header className="text-center border-b-2 border-black pb-4 mb-8 flex justify-between items-center">
@@ -320,6 +316,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                         left: 0;
                         top: 0;
                         width: 100%;
+                        z-index: 9999;
                     }
                     .page-break-after {
                         page-break-after: always;
@@ -333,6 +330,9 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                     th, td {
                         padding: 8px;
                         border: 1px solid #ddd;
+                    }
+                    .no-print {
+                        display: none;
                     }
                 }
                 .print-container {
@@ -405,7 +405,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
-      <header className="max-w-5xl mx-auto mb-8 relative">
+      <header className="max-w-5xl mx-auto mb-8 relative no-print">
         <div className="text-center">
             <p className="text-sm text-muted-foreground">
             رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
@@ -429,7 +429,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.3 }}
         >
-          <div className="mb-8">
+          <div className="mb-8 no-print">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-2xl font-bold text-primary flex items-center gap-3">
                 <currentAxis.icon className="h-6 w-6" />
@@ -472,7 +472,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
             })}
           </div>
 
-          <div className="mt-8 flex justify-between">
+          <div className="mt-8 flex justify-between no-print">
             <Button onClick={handleBack} disabled={currentAxisIndex === 0} variant="outline">
               السابق
             </Button>
@@ -486,5 +486,3 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     </div>
   );
 }
-
-    

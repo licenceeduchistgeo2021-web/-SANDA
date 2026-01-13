@@ -1,9 +1,12 @@
+
 "use client";
 
 import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { Button } from '@/components/ui/button';
 import { Answers } from '@/app/page';
+import { useToast } from '@/hooks/use-toast';
+import { Download, RotateCcw } from 'lucide-react';
 
 const axisWeights = {
     axis1: { q1: 1.5, q7: 1.5, q8: 1.4, q9: 1.4, default: 1.0 }, // الفهم
@@ -109,6 +112,7 @@ function calculateAxisScore(axisId: keyof typeof axisWeights, answers: Answers) 
 export default function Results({ governorate, answers, onRestart }: ResultsProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+  const { toast } = useToast();
 
   const score1 = calculateAxisScore('axis1', answers);
   const score2 = calculateAxisScore('axis2', answers);
@@ -139,10 +143,19 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
         
         const updatedResults = [...filteredResults, newResult];
         localStorage.setItem('sandaAuditResults', JSON.stringify(updatedResults));
+        toast({
+          title: "تم حفظ البيانات بنجاح",
+          description: "يمكنك الآن استخراج التقارير."
+        })
     } catch (error) {
         console.error("Failed to save results to localStorage", error);
     }
-  }, [governorate, score1, score2, score3, score4, totalScore]);
+  }, [governorate, score1, score2, score3, score4, totalScore, toast]);
+
+  const handlePrint = () => {
+    toast({ title: 'جاري تحضير الملف...', description: 'سيتم فتح نافذة الطباعة قريباً.' });
+    window.print();
+  };
 
   const scores = [
       { axis: 'الفهم', score: score1, badge: 'MHA | GIS', analysis: 'يقيس القدرة على النمذجة العلمية وتوقع المخاطر بناءً على بيانات DesInventar وتوقعات GIEC.', class: 'axis-1' },
@@ -253,13 +266,29 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
                 color: var(--muted-foreground);
                 line-height: 1.4;
             }
+             @media print {
+              .no-print {
+                display: none;
+              }
+              body {
+                background-color: white;
+              }
+              .printable-area {
+                padding: 2rem;
+                border: none;
+                box-shadow: none;
+              }
+              .page-break-before {
+                 page-break-before: always;
+              }
+             }
         `}</style>
-      <header className="max-w-6xl mx-auto text-center mb-8">
+      <header className="max-w-6xl mx-auto text-center mb-8 no-print">
         <h1 className="text-4xl font-bold text-primary mb-2">تقرير تقييم الصمود الرقمي</h1>
         <p className="text-lg text-muted-foreground">عمالة: {governorate}</p>
       </header>
 
-      <div className="max-w-6xl mx-auto bg-card p-8 rounded-xl shadow-lg border">
+      <div className="max-w-6xl mx-auto bg-card p-8 rounded-xl shadow-lg border printable-area">
         
         <div className="results-header mb-12">
             <h2 className="text-2xl font-bold mb-6 text-right text-primary">نتائج تقييم مؤشر الصمود</h2>
@@ -288,7 +317,7 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
           </p>
         </div>
 
-        <div className="my-12">
+        <div className="my-12 page-break-before">
             <h3 className="text-2xl font-bold text-center mb-6 text-primary">الأساس الإحصائي والهندسي للمؤشرات</h3>
              <div className="overflow-x-auto">
                 <table className="w-full text-right border-collapse">
@@ -315,7 +344,7 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
             </div>
         </div>
         
-        <div className="my-12">
+        <div className="my-12 page-break-before">
             <h3 className="text-2xl font-bold text-center mb-6 text-primary">شرح مختصر للمصطلحات التقنية</h3>
             {Object.entries(abbreviations).map(([axis, items]) => (
                  <div key={axis} className="mb-6">
@@ -332,8 +361,15 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
             ))}
         </div>
 
-        <div className="mt-12 text-center">
-          <Button onClick={onRestart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">إجراء تقييم جديد</Button>
+        <div className="mt-12 text-center flex justify-center gap-4 no-print">
+          <Button onClick={handlePrint} variant="outline">
+            <Download className="ml-2 h-4 w-4" />
+            تحميل التقرير الكامل (PDF)
+          </Button>
+          <Button onClick={onRestart} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <RotateCcw className="ml-2 h-4 w-4" />
+            إجراء تقييم جديد
+          </Button>
         </div>
       </div>
     </div>
