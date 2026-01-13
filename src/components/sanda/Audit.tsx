@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -82,6 +83,18 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
     axis4: {},
   });
   const [showMiniAnalysis, setShowMiniAnalysis] = useState(false);
+  const [printData, setPrintData] = useState<{axis: Axis; score: number; interpretation: {title: string, description: string}; answers: Answers[keyof Answers]} | null>(null);
+
+    useEffect(() => {
+    if (printData) {
+      const timer = setTimeout(() => {
+        window.print();
+        setPrintData(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [printData]);
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -130,10 +143,14 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
   };
   
   const handleExportAxisPdf = () => {
-    // This is a placeholder for the PDF export functionality.
-    // In a real application, you would use a library like jsPDF and jsPDF-autotable.
-    alert(`تصدير نتائج المحور: ${currentAxis.title}`);
-    window.print();
+    const axisScore = calculateAxisScore(currentAxisId, answers);
+    const interpretation = getInterpretation(axisScore);
+    setPrintData({
+      axis: currentAxis,
+      score: axisScore,
+      interpretation: interpretation,
+      answers: answers[currentAxisId]
+    });
   };
 
   const handleBack = () => {
@@ -143,12 +160,6 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
     }
   };
   
-  const findNoteForTerm = (text: string) => {
-    const terms = Object.keys(scientificNotes);
-    const foundTerm = terms.find(term => new RegExp(`\\b${term}\\b`, 'i').test(text));
-    return foundTerm ? [foundTerm, scientificNotes[foundTerm]] : null;
-  };
-
   const renderQuestionText = (text: string) => {
     const terms = Object.keys(scientificNotes);
     const regex = new RegExp(`(${terms.join('|')})`, 'gi');
@@ -191,6 +202,104 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
   ];
   const COLORS = ['hsl(var(--accent))', 'hsl(var(--muted))'];
 
+
+ if (printData) {
+    const { axis, score, interpretation: interp, answers: axisAnswers } = printData;
+    const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    const maturityPercent = (score / 5) * 100;
+    const printChartData = [
+        { name: 'Score', value: maturityPercent },
+        { name: 'Remaining', value: 100 - maturityPercent },
+    ];
+
+    return (
+        <div className="print-container bg-white text-black p-8" dir="rtl">
+            <header className="text-center border-b-2 border-black pb-4 mb-8">
+                <h1 className="text-3xl font-bold text-primary">تقرير تقييم الصمود الرقمي المفصل - {axis.title.split(':')[0]}</h1>
+                <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
+                <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
+            </header>
+
+            <section className="mb-8 page-break-after">
+                <h2 className="text-2xl font-bold mb-4 text-center">القسم الأول: تحليل النتائج</h2>
+                <div className="flex justify-around items-center bg-gray-100 p-6 rounded-lg">
+                    <div className="text-center">
+                        <p className="text-lg font-semibold">مستوى النضج</p>
+                        <p className="text-5xl font-bold text-accent my-2">{score.toFixed(2)}</p>
+                        <p className="text-lg">({maturityPercent.toFixed(0)}%)</p>
+                    </div>
+                    <div className="max-w-md">
+                        <p className="text-xl font-bold">{interp.title}</p>
+                        <p className="mt-2">{interp.description}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 className="text-2xl font-bold mb-4 text-center">القسم الثاني: الإجابات التفصيلية</h2>
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="bg-gray-200">
+                            <th className="border p-2 w-1/2">السؤال</th>
+                            <th className="border p-2">الإجابة المختارة</th>
+                            <th className="border p-2">المستوى</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {axis.questions.map((q, index) => {
+                            const answerValue = axisAnswers[q.id];
+                            const selectedOption = q.options.find(opt => `L${opt.score}` === answerValue);
+                            return (
+                                <tr key={q.id} className="even:bg-gray-50 page-break-inside-avoid">
+                                    <td className="border p-2 text-sm">{index + 1}. {q.text}</td>
+                                    <td className="border p-2 text-sm">{selectedOption ? selectedOption.text : 'لم تتم الإجابة'}</td>
+                                    <td className="border p-2 text-center font-bold">{answerValue || '-'}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </section>
+             <style jsx global>{`
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    .print-container, .print-container * {
+                        visibility: visible;
+                    }
+                    .print-container {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                    .page-break-after {
+                        page-break-after: always;
+                    }
+                    .page-break-inside-avoid {
+                        page-break-inside: avoid;
+                    }
+                    table {
+                        width: 100%;
+                    }
+                    th, td {
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                    }
+                }
+                .print-container {
+                  display: none;
+                }
+                @media print {
+                  .print-container {
+                    display: block;
+                  }
+                }
+            `}</style>
+        </div>
+    );
+}
 
   if (showMiniAnalysis) {
       return (
@@ -238,7 +347,7 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
                             تصدير تقرير المحور
                         </Button>
                         <Button onClick={handleProceedToNextAxis} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                            الانتقال إلى المحور التالي
+                            {currentAxisIndex === axisOrder.length - 1 ? 'عرض النتائج النهائية' : 'الانتقال إلى المحور التالي'}
                         </Button>
                     </CardFooter>
                 </Card>
@@ -280,7 +389,7 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
           <div className="space-y-8">
             {questions.map((q, index) => {
               const isAnswered = !!answers[currentAxisId as keyof Answers][q.id];
-              const questionContainerClasses = `border-b pb-6 ${!isAnswered && !isCurrentAxisComplete && currentAxisAnsweredCount > 0 ? 'border-red-500' : ''}`;
+              const questionContainerClasses = `border-b pb-6 ${!isCurrentAxisComplete && currentAxisAnsweredCount > 0 && !isAnswered ? 'border-red-500/50' : ''}`;
 
               return (
                 <div key={q.id} className={questionContainerClasses}>
@@ -322,3 +431,5 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
     </div>
   );
 }
+
+    
