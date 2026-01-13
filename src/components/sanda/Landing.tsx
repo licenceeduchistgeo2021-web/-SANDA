@@ -43,11 +43,12 @@ export default function Landing({ onStartAudit }: LandingProps) {
         <header className="text-center mb-12">
           <div className="flex justify-center items-center gap-4 md:gap-8 mb-6">
             <Image
-              src="https://picsum.photos/seed/uni-logo/120/120"
+              src="/faculty_logo.png"
               alt="University Logo"
               width={100}
               height={100}
               className="rounded-full hidden md:block"
+              style={{maxHeight: '75px', width: 'auto'}}
               data-ai-hint="university logo"
             />
             <div className='flex flex-col gap-2'>
@@ -62,11 +63,12 @@ export default function Landing({ onStartAudit }: LandingProps) {
               </p>
             </div>
             <Image
-              src="https://picsum.photos/seed/master-logo/120/120"
+              src="/master_logo.png"
               alt="Master's Program Logo"
               width={100}
               height={100}
               className="rounded-full hidden md:block"
+              style={{maxHeight: '75px', width: 'auto'}}
               data-ai-hint="program logo"
             />
           </div>

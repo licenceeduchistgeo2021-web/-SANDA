@@ -13,6 +13,8 @@ import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
 import {motion, AnimatePresence} from 'framer-motion'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import Image from 'next/image';
+
 
 type AuditProps = {
   governorate: string;
@@ -214,14 +216,18 @@ export default function Audit({ governorate, onFinishAudit }: AuditProps) {
 
     return (
         <div className="print-container bg-white text-black p-8" dir="rtl">
-            <header className="text-center border-b-2 border-black pb-4 mb-8">
-                <h1 className="text-3xl font-bold text-primary">تقرير تقييم الصمود الرقمي المفصل - {axis.title.split(':')[0]}</h1>
-                <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
-                <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
+            <header className="text-center border-b-2 border-black pb-4 mb-8 flex justify-between items-center">
+                <Image src="/faculty_logo.png" alt="Faculty Logo" width={100} height={100} style={{maxHeight: '75px', width: 'auto'}} />
+                <div>
+                    <h1 className="text-3xl font-bold text-primary">تقرير تقييم الصمود الرقمي المفصل</h1>
+                    <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
+                    <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
+                </div>
+                <Image src="/master_logo.png" alt="Master's Logo" width={100} height={100} style={{maxHeight: '75px', width: 'auto'}}/>
             </header>
-
+            
             <section className="mb-8 page-break-after">
-                <h2 className="text-2xl font-bold mb-4 text-center">القسم الأول: تحليل النتائج</h2>
+                <h2 className="text-2xl font-bold mb-4 text-center">القسم الأول: تحليل نتائج: {axis.title}</h2>
                 <div className="flex justify-around items-center bg-gray-100 p-6 rounded-lg">
                     <div className="text-center">
                         <p className="text-lg font-semibold">مستوى النضج</p>
