@@ -39,6 +39,8 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     const [contentLevel, setContentLevel] = useState('summary');
     const [selectedGov, setSelectedGov] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
+    const [facultyLogoError, setFacultyLogoError] = useState(false);
+    const [masterLogoError, setMasterLogoError] = useState(false);
 
     const handlePrintReport = (result: AuditResult) => {
         const printWindow = window.open('', '_blank');
@@ -64,7 +66,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                         .print-header div { text-align: center; }
                         h1 { font-size: 22px; font-weight: bold; color: #1a5f7a; }
                         h2 { font-size: 20px; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9em; }
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
                         th { background-color: #f2f2f2; }
                         tr { page-break-inside: avoid; }
@@ -488,3 +490,5 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
     </div>
   );
 }
+
+    

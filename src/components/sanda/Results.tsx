@@ -1,12 +1,13 @@
 
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Chart from 'chart.js/auto';
 import { Button } from '@/components/ui/button';
 import { Answers } from '@/app/page';
 import { useToast } from '@/hooks/use-toast';
 import { Download, RotateCcw } from 'lucide-react';
+import { surveyData } from '@/lib/sanda-data';
 
 const axisWeights = {
     axis1: { q1: 1.5, q7: 1.5, q8: 1.4, q9: 1.4, default: 1.0 }, // الفهم
@@ -80,7 +81,6 @@ type ResultsProps = {
   onRestart: () => void;
 };
 
-
 function calculateAxisScore(axisId: keyof typeof axisWeights, answers: Answers) {
     let totalWeightedScore = 0;
     let totalWeights = 0;
@@ -109,6 +109,88 @@ function calculateAxisScore(axisId: keyof typeof axisWeights, answers: Answers) 
     }
     return totalWeights > 0 ? parseFloat((totalWeightedScore / totalWeights).toFixed(2)) : 0;
 }
+
+const PrintHeader = ({ governorate }: { governorate: string }) => {
+    const [facultyLogoError, setFacultyLogoError] = useState(false);
+    const [masterLogoError, setMasterLogoError] = useState(false);
+    const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    return (
+        <div className="hidden print:block">
+            <header className="text-center border-b-2 border-black pb-4 mb-8 flex justify-between items-center">
+               {facultyLogoError ? (
+                  <span className="font-bold">LOGO_FLSHM</span>
+                ) : (
+                  <img
+                    src="/faculty_logo.png"
+                    alt="FLSHM Logo"
+                    style={{maxHeight: '75px', width: 'auto'}}
+                    onError={() => setFacultyLogoError(true)}
+                  />
+                )}
+                <div>
+                    <h1 className="text-xl font-bold">Master SANDA - University Hassan II</h1>
+                    <p className="text-lg mt-1"><strong>تقرير تقييم الصمود الرقمي الشامل</strong></p>
+                    <p><strong>العمالة:</strong> {governorate}</p>
+                    <p><strong>الطالب الباحث:</strong> محمد لعرانتي</p>
+                    <p><strong>تاريخ التقرير:</strong> {today}</p>
+                </div>
+                {masterLogoError ? (
+                  <span className="font-bold">LOGO_MASTER</span>
+                ) : (
+                  <img
+                    src="/master_logo.png"
+                    alt="Master SANDA Logo"
+                    style={{maxHeight: '75px', width: 'auto'}}
+                    onError={() => setMasterLogoError(true)}
+                  />
+                )}
+            </header>
+        </div>
+    );
+};
+
+const FullAnswersTable = ({ answers }: { answers: Answers }) => {
+    return (
+        <div className="hidden print:block page-break-before">
+            <h2 className="text-2xl font-bold text-center mb-6 text-primary">القسم 3: سجل الأجوبة الكامل</h2>
+            {Object.keys(surveyData).map(axisId => {
+                const axis = surveyData[axisId as keyof typeof surveyData];
+                const axisAnswers = answers[axisId as keyof typeof answers];
+                if (!axisAnswers) return null;
+
+                return (
+                    <div key={axisId} className="mb-8 page-break-inside-avoid">
+                        <h3 className="text-xl font-bold mb-4 bg-muted p-2 rounded-md">{axis.title}</h3>
+                        <table className="w-full border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-200">
+                                    <th className="border p-2 w-1/2">السؤال</th>
+                                    <th className="border p-2">الإجابة المختارة</th>
+                                    <th className="border p-2">المستوى</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {axis.questions.map((q, index) => {
+                                    const answerValue = axisAnswers[q.id];
+                                    const selectedOption = q.options.find(opt => `L${opt.score}` === answerValue);
+                                    return (
+                                        <tr key={q.id} className="even:bg-gray-50 page-break-inside-avoid">
+                                            <td className="border p-2">{index + 1}. {q.text}</td>
+                                            <td className="border p-2">{selectedOption ? selectedOption.text : 'لم تتم الإجابة'}</td>
+                                            <td className="border p-2 text-center font-bold">{answerValue || '-'}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 
 export default function Results({ governorate, answers, onRestart }: ResultsProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -156,7 +238,7 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
 
   const handlePrint = () => {
     toast({ title: 'جاري تحضير الملف...', description: 'سيتم فتح نافذة الطباعة قريباً.' });
-    window.print();
+    setTimeout(() => window.print(), 500);
   };
 
   const scores = [
@@ -187,6 +269,7 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
             }]
           },
           options: {
+            animation: false,
             scales: {
               r: {
                 min: 0,
@@ -268,23 +351,34 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
                 color: var(--muted-foreground);
                 line-height: 1.4;
             }
-             @media print {
-              .no-print {
-                display: none;
-              }
+            @media print {
               body {
-                background-color: white;
+                background-color: white !important;
+                color: black !important;
+              }
+              .no-print {
+                display: none !important;
               }
               .printable-area {
-                padding: 2rem;
-                border: none;
-                box-shadow: none;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: white !important;
               }
               .page-break-before {
                  page-break-before: always;
               }
-             }
+               .page-break-inside-avoid {
+                page-break-inside: avoid;
+              }
+              table {
+                width: 100%;
+              }
+            }
         `}</style>
+
+      <PrintHeader governorate={governorate} />
+      
       <header className="max-w-6xl mx-auto text-center mb-8 no-print">
         <h1 className="text-4xl font-bold text-primary mb-2">تقرير تقييم الصمود الرقمي</h1>
         <p className="text-lg text-muted-foreground">عمالة: {governorate}</p>
@@ -292,8 +386,14 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
 
       <div className="max-w-6xl mx-auto bg-card p-8 rounded-xl shadow-lg border printable-area">
         
-        <div className="results-header mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-right text-primary">نتائج تقييم مؤشر الصمود</h2>
+        <div className="results-header mb-12 page-break-inside-avoid">
+            <h2 className="text-2xl font-bold mb-6 text-right text-primary">القسم 1: نتائج تقييم مؤشر الصمود</h2>
+             <div className="flex justify-around items-center bg-gray-100 p-6 rounded-lg mb-6">
+                <div className="text-center">
+                    <p className="text-lg font-semibold">المؤشر النهائي للصمود</p>
+                    <p className="text-6xl font-bold text-primary my-2">{totalScore.toFixed(2)}</p>
+                </div>
+            </div>
             <div className="results-grid">
                 {scores.map(item => (
                     <div key={item.axis} className={`result-card ${item.class}`}>
@@ -308,10 +408,13 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
             </div>
         </div>
 
-        <div className="chart-section my-12">
+        <div className="chart-section my-12 page-break-inside-avoid">
           <h3 className="text-2xl font-bold text-center mb-6 text-primary">خلاصة العلاقة التكاملية بين محاور الصمود</h3>
           <div className="max-w-2xl mx-auto">
             <canvas ref={chartRef}></canvas>
+          </div>
+          <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center mt-4">
+              <p className="text-muted-foreground">مكان مخصص لعرض الخريطة التفاعلية</p>
           </div>
           <p className="integrative-description">
             <strong>رؤية شاملة:</strong> تظهر العلاقة التكاملية أن الفهم الجيد (P1) يوجه الحوكمة (P2) لفرض استثمارات (P3) ترفع الجاهزية (P4). 
@@ -319,8 +422,8 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
           </p>
         </div>
 
-        <div className="my-12 page-break-before">
-            <h3 className="text-2xl font-bold text-center mb-6 text-primary">الأساس الإحصائي والهندسي للمؤشرات</h3>
+        <div className="my-12 page-break-before page-break-inside-avoid">
+            <h3 className="text-2xl font-bold text-center mb-6 text-primary">القسم 2: الأساس الإحصائي والهندسي للمؤشرات</h3>
              <div className="overflow-x-auto">
                 <table className="w-full text-right border-collapse">
                     <thead className='bg-muted'>
@@ -346,10 +449,12 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
             </div>
         </div>
         
+        <FullAnswersTable answers={answers} />
+
         <div className="my-12 page-break-before">
             <h3 className="text-2xl font-bold text-center mb-6 text-primary">شرح مختصر للمصطلحات التقنية</h3>
             {Object.entries(abbreviations).map(([axis, items]) => (
-                 <div key={axis} className="mb-6">
+                 <div key={axis} className="mb-6 page-break-inside-avoid">
                      <h4 className={`text-xl font-bold mb-4 ${scores.find(s => s.axis === axis)?.class}`}>{axis}</h4>
                      <div className="stats-container pt-0">
                          {items.map(item => (
