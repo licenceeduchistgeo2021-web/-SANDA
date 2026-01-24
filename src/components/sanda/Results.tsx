@@ -18,13 +18,13 @@ const axisWeights = {
 
 const statisticalBasis = [
     {
-        axis: 'الفهم',
+        axis: 'الجانب التقني',
         basis: 'توزيع Gumbel و Kriging',
         goal: 'قياس دقة التنبؤ بالأحداث النادرة (فترات الرجوع T).',
         class: 'axis-1-border'
     },
     {
-        axis: 'الحوكمة',
+        axis: 'الحكامة',
         basis: 'نظرية Reliability',
         goal: 'قياس صمود "سلاسل القرار" ومنع الفشل المؤسسي.',
         class: 'axis-2-border'
@@ -36,7 +36,7 @@ const statisticalBasis = [
         class: 'axis-3-border'
     },
     {
-        axis: 'الاستعداد',
+        axis: 'التكوين',
         basis: 'نظرية Queueing و Exponential',
         goal: 'قياس سرعة التعافي وإدارة ضغط الموارد البشرية.',
         class: 'axis-4-border'
@@ -44,11 +44,11 @@ const statisticalBasis = [
 ];
 
 const abbreviations = {
-    "الفهم": [
+    "الجانب التقني": [
         { abbr: "MHA (تقييم المخاطر المتعددة)", desc: "تحليل شامل يربط بين نوع الخطر وهشاشة المنطقة لتقدير الخسائر المحتملة." },
         { abbr: "Gumbel Distribution (توزيع غومبل)", desc: "النموذج الرياضي الأهم لحساب \"فترات الرجوع\" وتوقع الفيضانات والزلازل النادرة." }
     ],
-    "الحوكمة": [
+    "الحكامة": [
         { abbr: "NISDRM (نظام المعلومات الوطني)", desc: "المنصة الرقمية التي تضمن تدفق البيانات بين العمالة والقطاعات لضمان موثوقية التنسيق." },
         { abbr: "Reliability Theory (نظرية الموثوقية)", desc: "إحصاء هندسي يقيس احتمالية فشل \"نظام القرار\" أثناء وقوع الكارثة." }
     ],
@@ -56,7 +56,7 @@ const abbreviations = {
         { abbr: "CBA (تحليل التكلفة والعائد)", desc: "دراسة اقتصادية تثبت جدوى الاستثمار الوقائي لتقليل الخسارة السنوية المتوقعة (AAL)." },
         { abbr: "RPS 2000 (ضابط البناء)", desc: "المعايير التقنية التي تضمن صمود البنية التحتية والمباني أمام الهزات الزلزالية." }
     ],
-    "الاستعداد": [
+    "التكوين": [
         { abbr: "MHEWS (نظام الإنذار المبكر)", desc: "النموذج الإحصائي الذي يقلل زمن الاستجابة ويحسب احتمالية الإنذارات الكاذبة (Bayesian)." },
         { abbr: "BBB (إعادة البناء بشكل أفضل)", desc: "مبدأ هندسي يهدف لرفع مستوى الصمود أثناء مرحلة التعافي لمنع تكرار الكارثة." }
     ],
@@ -242,10 +242,10 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
   };
 
   const scores = [
-      { axis: 'الفهم', score: score1, badge: 'MHA | GIS', analysis: 'يقيس القدرة على النمذجة العلمية وتوقع المخاطر بناءً على بيانات DesInventar وتوقعات GIEC.', class: 'axis-1' },
-      { axis: 'الحوكمة', score: score2, badge: 'NISDRM | KPI', analysis: 'يقيس موثوقية التنسيق المؤسسي والالتزام بالقوانين التنظيمية مثل قانون 110.14.', class: 'axis-2' },
+      { axis: 'الجانب التقني', score: score1, badge: 'MHA | GIS', analysis: 'يقيس القدرة على النمذجة العلمية وتوقع المخاطر بناءً على بيانات DesInventar وتوقعات GIEC.', class: 'axis-1' },
+      { axis: 'الحكامة', score: score2, badge: 'NISDRM | KPI', analysis: 'يقيس موثوقية التنسيق المؤسسي والالتزام بالقوانين التنظيمية مثل قانون 110.14.', class: 'axis-2' },
       { axis: 'الاستثمار', score: score3, badge: 'CBA | RPS 2000', analysis: 'يقيس كفاءة الاستثمار في البنية التحتية الصامدة بناءً على تحليل التكلفة والعائد (CBA).', class: 'axis-3' },
-      { axis: 'الاستعداد', score: score4, badge: 'MHEWS | BBB', analysis: 'يقيس سرعة الاستجابة الميدانية والقدرة على "إعادة البناء بشكل أفضل" (BBB).', class: 'axis-4' },
+      { axis: 'التكوين', score: score4, badge: 'MHEWS | BBB', analysis: 'يقيس سرعة الاستجابة الميدانية والقدرة على "إعادة البناء بشكل أفضل" (BBB).', class: 'axis-4' },
   ];
 
   useEffect(() => {
@@ -258,7 +258,7 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
         chartInstance.current = new Chart(ctx, {
           type: 'radar',
           data: {
-            labels: ['الفهم P1', 'الحوكمة P2', 'الاستثمار P3', 'الاستعداد P4'],
+            labels: ['الجانب التقني P1', 'الحكامة P2', 'الاستثمار P3', 'التكوين P4'],
             datasets: [{
               label: `مؤشر صمود: ${governorate}`,
               data: [score1, score2, score3, score4],
@@ -483,4 +483,5 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
   );
 }
 
+    
     

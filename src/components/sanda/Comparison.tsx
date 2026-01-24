@@ -20,10 +20,10 @@ type ComparisonProps = {
 };
 
 const axisLabels: { [key: string]: string } = {
-  axis1: 'الفهم',
-  axis2: 'الحوكمة',
+  axis1: 'الجانب التقني',
+  axis2: 'الحكامة',
   axis3: 'الاستثمار',
-  axis4: 'الاستعداد',
+  axis4: 'التكوين',
 };
 
 const axisColors = {
@@ -103,8 +103,11 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
             const axis = surveyData[axisId as keyof typeof surveyData];
             reportContent += `<h2 class="page-break">القسم 2: الأجوبة التفصيلية - ${axis.title}</h2>`;
             reportContent += `<table><thead><tr><th>السؤال</th><th>الإجابة المختارة</th><th>المستوى</th></tr></thead><tbody>`;
+            
+            const axisAnswers = result.answers?.[axisId as keyof typeof result.answers] || {};
+
             axis.questions.forEach((q, index) => {
-                const answerValue = result.answers[axisId as keyof typeof result.answers]?.[q.id];
+                const answerValue = axisAnswers[q.id];
                 const selectedOption = q.options.find(opt => `L${opt.score}` === answerValue);
                 reportContent += `
                     <tr>
@@ -161,7 +164,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     };
     
     const handleExportCsv = (detailed: boolean) => {
-        let headers = [ "العمالة", "المؤشر النهائي", "محور الفهم", "محور الحوكمة", "محور الاستثمار", "محور الاستعداد", "تاريخ التسجيل" ];
+        let headers = [ "العمالة", "المؤشر النهائي", "الحكامة", "الجانب التقني", "الاستثمار", "التكوين", "تاريخ التسجيل" ];
         const allQuestions: { axisId: string, qId: string, text: string }[] = [];
         
         if (detailed) {
@@ -179,8 +182,8 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
             const row = [
                 `"${result.governorate}"`,
                 result.total.toFixed(2),
-                result.scores.axis1.toFixed(2),
                 result.scores.axis2.toFixed(2),
+                result.scores.axis1.toFixed(2),
                 result.scores.axis3.toFixed(2),
                 result.scores.axis4.toFixed(2),
                 `"${timestamp}"`
@@ -188,8 +191,8 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
 
             if (detailed) {
                 allQuestions.forEach(({axisId, qId}) => {
-                    const axisAnswers = result.answers[axisId as keyof typeof result.answers];
-                    const answer = axisAnswers ? axisAnswers[qId] : 'N/A';
+                    const axisAnswers = result.answers?.[axisId as keyof typeof result.answers] || {};
+                    const answer = axisAnswers[qId] || 'N/A';
                     const questionData = surveyData[axisId as keyof typeof surveyData].questions.find(q => q.id === qId);
                     const option = questionData?.options.find(opt => `L${opt.score}` === answer);
                     row.push(`"${option ? option.text.replace(/"/g, '""') : 'لم تتم الإجابة'}"`);
@@ -491,4 +494,5 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
   );
 }
 
+    
     
