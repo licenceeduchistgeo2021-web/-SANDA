@@ -39,8 +39,6 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     const [contentLevel, setContentLevel] = useState('summary');
     const [selectedGov, setSelectedGov] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const [facultyLogoError, setFacultyLogoError] = useState(false);
-    const [masterLogoError, setMasterLogoError] = useState(false);
 
     const handlePrintReport = (result: AuditResult) => {
         const printWindow = window.open('', '_blank');
@@ -59,7 +57,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
                     <style>
-                        body { font-family: 'Tajawal', sans-serif; direction: rtl; background-color: white; color: black; }
+                        body { font-family: 'Tajawal', sans-serif; direction: rtl; background-color: white; color: black; padding: 20px; }
                         @page { size: A4; margin: 20mm; }
                         .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 2rem; }
                         .print-header img { max-height: 75px; }
@@ -480,7 +478,7 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
           <CardHeader>
             <CardTitle>عرض الخرائط (GIS)</CardTitle>
             <CardDescription>
-             سيتم هنا عرض خريطة تفاعلية للعمالات باستخدام مكتبات مثل Leaflet.js. سيتم تلوين كل منطقة بناءً على درجة الصمود الإجمالية المحفوظة (أخضر &gt; 3.5، أصفر 2.5-3.5، أحمر &lt; 2.5). النقر على منطقة سيعرض اسمها ودرجتها. (قيد التطوير)
+             سيتم هنا عرض خريطة تفاعلية للعمالات باستخدام مكتبات مثل Leaflet.js. سيتم تلوين كل منطقة بناءً على درجة الصمود الإجمالية المحفوظة (أخضر {'>'} 3.5، أصفر 2.5-3.5، أحمر {'<'} 2.5). النقر على منطقة سيعرض اسمها ودرجتها. (قيد التطوير)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -493,6 +491,3 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
     </div>
   );
 }
-
-    
-    

@@ -8,7 +8,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardFooter,
+  CardDescription
 } from '@/components/ui/card';
 import {
   Select,
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Building, Map, FileText, BarChart, CheckCircle, Download } from 'lucide-react';
+import { Building, Map, FileText, BarChart, CheckCircle, Download, Info, ShieldCheck, Database, GraduationCap } from 'lucide-react';
 import type { AuditResult } from '@/components/sanda/Results';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -73,7 +74,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
                     <style>
-                        body { font-family: 'Tajawal', sans-serif; direction: rtl; background-color: white; color: black; }
+                        body { font-family: 'Tajawal', sans-serif; direction: rtl; background-color: white; color: black; padding: 20px; }
                         @page { size: A4; margin: 20mm; }
                         .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 2rem; }
                         .print-header img { max-height: 75px; }
@@ -241,7 +242,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                             <RadioGroupItem value="excel" id="excel" />
                             <Label htmlFor="excel">قاعدة البيانات الكاملة (CSV)</Label>
                         </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
+                        <div className="flex items-center space-x-2 space-reverse">
                             <RadioGroupItem value="pdf" id="pdf" />
                             <Label htmlFor="pdf">تقرير شامل لعمالة واحدة (PDF)</Label>
                         </div>
@@ -358,12 +359,56 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
           </div>
         </header>
 
+        <section className="max-w-4xl mx-auto mb-16">
+            <Card className="shadow-2xl border-primary/20 bg-gradient-to-br from-card to-primary/5 overflow-hidden">
+                <CardHeader className="text-center pb-2">
+                    <div className="mx-auto bg-primary/10 rounded-full p-4 w-fit mb-4">
+                        <GraduationCap className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold text-primary">تعريف بمنصة SANDA</CardTitle>
+                    <CardDescription className="text-lg">نظام تقييم الصمود الرقمي وفق إطار سنداي العالمي</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex gap-4 items-start">
+                            <div className="bg-primary/10 p-2 rounded-lg shrink-0">
+                                <ShieldCheck className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold mb-1">الهدف الاستراتيجي</h4>
+                                <p className="text-sm text-muted-foreground">قياس قدرة عمالات جهة الدار البيضاء-سطات على الصمود أمام الكوارث الطبيعية عبر 4 محاور علمية دقيقة (الحكامة، التقنية، الاستثمار، والجاهزية).</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4 items-start">
+                            <div className="bg-primary/10 p-2 rounded-lg shrink-0">
+                                <Database className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold mb-1">النمذجة الرياضية</h4>
+                                <p className="text-sm text-muted-foreground">تعتمد المنصة على نماذج إحصائية متقدمة مثل "توزيع Gumbel" و "نظرية الموثوقية" لتحويل الأجوبة الميدانية إلى مؤشرات رقمية قابلة للقياس.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-muted/50 p-6 rounded-xl border border-dashed">
+                        <h4 className="font-bold mb-4 flex items-center gap-2">
+                            <Info className="h-5 w-5 text-accent" />
+                            سياق المشروع الأكاديمي
+                        </h4>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            تندرج هذه المنصة في إطار بحث أكاديمي لنيل شهادة الماستر في "هندسة تدبير مخاطر الكوارث الطبيعية". تهدف الأداة إلى توفير قاعدة بيانات رقمية تساعد صناع القرار في عمالات (سيدي البرنوصي، المحمدية، وعين السبع) على تحديد فجوات الصمود وتوجيه الاستثمارات الوقائية بشكل فعال، انتقالاً من مرحلة رد الفعل إلى مرحلة التخطيط الاستباقي وإعادة الإعمار المرنة.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        </section>
+
         <section className="max-w-2xl mx-auto bg-card p-8 rounded-xl shadow-lg border mb-16">
           <h2 className="text-xl font-semibold text-center mb-2">
-            ابدأ التقييم
+            ابدأ التقييم الميداني
           </h2>
           <p className="text-center text-muted-foreground mb-6">
-            قبل البدء، يرجى تحديد العمالة التي تنتمي إليها
+            يرجى تحديد العمالة المستهدفة للبدء في ملء استمارة الصمود
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Select
@@ -382,7 +427,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                         {completedGovernorates.includes(gov) && (
                           <span className="flex items-center gap-2 text-green-600">
                             <CheckCircle className="h-4 w-4" />
-                            <span className="text-xs">تم ملء الاستمارة</span>
+                            <span className="text-xs">مكتمل</span>
                           </span>
                         )}
                       </div>
@@ -395,7 +440,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               disabled={!selectedGovernorate}
               className="w-full sm:w-auto h-12 px-8 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-             {completedGovernorates.includes(selectedGovernorate) ? 'متابعة أو إعادة التقييم' : 'ابدأ التدقيق الجديد'}
+             {completedGovernorates.includes(selectedGovernorate) ? 'متابعة التقييم' : 'بدء تدقيق جديد'}
             </Button>
           </div>
            <div className="mt-4 border-t pt-4">
@@ -405,7 +450,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               variant="outline"
             >
               <BarChart className="ml-2 h-5 w-5" />
-              الانتقال إلى لوحة المقارنة
+              عرض لوحة المقارنة الشاملة
             </Button>
            </div>
         </section>
@@ -418,12 +463,12 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                   <Building className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle className="text-xl font-bold">
-                  مقارنة العمالات
+                  مقارنة الأداء
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-muted-foreground">
-                  تحليل إحصائي للفوارق في مستويات الصمود.
+                  تحليل الفوارق الجغرافية في مستويات الصمود الرقمي بين العمالات الثلاث.
                 </p>
               </CardContent>
             </Card>
@@ -438,7 +483,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-muted-foreground">
-                  عرض النطاقات الجغرافية للمخاطر وفق تقنيات GIS.
+                  توزيع النطاقات الجغرافية للمخاطر وتلوين المناطق حسب مؤشر القابلية للتضرر.
                 </p>
               </CardContent>
             </Card>
@@ -448,12 +493,12 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                   <Download className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle className="text-xl font-bold">
-                  استخراج البيانات
+                  استخراج التقارير
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-muted-foreground mb-4">
-                  تصدير التقارير والبيانات الخام للتحليل المعمق.
+                  تصدير التقارير الأكاديمية المفصلة والبيانات الخام للتحليل الإحصائي المعمق.
                 </p>
               </CardContent>
               <CardFooter className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -461,7 +506,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                     <DialogTrigger asChild>
                         <Button variant="outline" className="w-full" disabled={completedAudits.length === 0}>
                            <FileText className="ml-2 h-4 w-4" />
-                           تصدير التقارير
+                           تصدير البيانات
                         </Button>
                     </DialogTrigger>
                     <ExportModal results={completedAudits} />
@@ -474,6 +519,3 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
     </div>
   );
 }
-
-    
-    
