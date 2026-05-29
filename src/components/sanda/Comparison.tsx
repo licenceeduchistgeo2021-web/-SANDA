@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import type { AuditResult } from '@/components/sanda/Results';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowRight, Trash2, Download } from 'lucide-react';
+import { ArrowRight, Trash2, Download, TrendingUp, AlertTriangle, Lightbulb, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { surveyData } from '@/lib/sanda-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -382,6 +382,38 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
     };
   }, [results]);
 
+  // SWOT Analysis Logic
+  const swotData = useMemo(() => {
+    if (results.length === 0) return null;
+
+    const aggregateScores: { [key: string]: number[] } = {
+        axis1: [], axis2: [], axis3: [], axis4: []
+    };
+
+    results.forEach(r => {
+        Object.keys(r.scores).forEach(axis => {
+            aggregateScores[axis].push(r.scores[axis as keyof typeof r.scores]);
+        });
+    });
+
+    const averages = Object.keys(aggregateScores).map(axis => ({
+        id: axis,
+        name: axisLabels[axis],
+        avg: aggregateScores[axis].reduce((a, b) => a + b, 0) / results.length
+    }));
+
+    const strengths = averages.filter(a => a.avg >= 3.5).map(a => a.name);
+    const weaknesses = averages.filter(a => a.avg < 2.5).map(a => a.name);
+    
+    // Opportunities: Areas with mid-range scores that can be improved
+    const opportunities = averages.filter(a => a.avg >= 2.5 && a.avg < 3.5).map(a => `تطوير ${a.name} لرفع مستوى الصمود`);
+    
+    // Threats: Areas with very low scores or critical governance issues
+    const threats = averages.filter(a => a.avg < 2.0).map(a => `هشاشة حادة في ${a.name} قد تعيق التعافي`);
+
+    return { strengths, weaknesses, opportunities, threats };
+  }, [results]);
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8" dir="rtl">
       <header className="max-w-7xl mx-auto flex justify-between items-center mb-8">
@@ -459,26 +491,77 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
         </Card>
         
         {results.length > 0 && (
-            <Card>
-            <CardHeader>
-                <CardTitle>التصور الإحصائي</CardTitle>
-                <CardDescription>
-                    مقارنة مرئية لدرجات المحاور الأربعة لكل عمالة.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="relative h-[500px]">
-                    <canvas ref={chartRef}></canvas>
-                </div>
-            </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>التصور الإحصائي</CardTitle>
+                        <CardDescription>
+                            مقارنة مرئية لدرجات المحاور الأربعة لكل عمالة.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="relative h-[400px]">
+                            <canvas ref={chartRef}></canvas>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>تحليل SWOT للمنطقة</CardTitle>
+                        <CardDescription>
+                            تحليل نقاط القوة والضعف والفرص والتهديدات بناءً على النتائج المجمعة.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-900">
+                                <h4 className="font-bold text-green-700 dark:text-green-400 flex items-center gap-2 mb-2">
+                                    <TrendingUp className="h-5 w-5" />
+                                    نقاط القوة (Strengths)
+                                </h4>
+                                <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {swotData?.strengths.length ? swotData.strengths.map(s => <li key={s}>{s}</li>) : <li>لا توجد نقاط قوة بارزة (أقل من 3.5)</li>}
+                                </ul>
+                            </div>
+                            <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-900">
+                                <h4 className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2 mb-2">
+                                    <AlertTriangle className="h-5 w-5" />
+                                    نقاط الضعف (Weaknesses)
+                                </h4>
+                                <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {swotData?.weaknesses.length ? swotData.weaknesses.map(w => <li key={w}>{w}</li>) : <li>لا توجد نقاط ضعف حادة (فوق 2.5)</li>}
+                                </ul>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
+                                <h4 className="font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2 mb-2">
+                                    <Lightbulb className="h-5 w-5" />
+                                    الفرص (Opportunities)
+                                </h4>
+                                <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {swotData?.opportunities.length ? swotData.opportunities.map(o => <li key={o}>{o}</li>) : <li>تحسين المحاور المتوسطة لرفع مؤشر الصمود</li>}
+                                </ul>
+                            </div>
+                            <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border border-orange-200 dark:border-orange-900">
+                                <h4 className="font-bold text-orange-700 dark:text-orange-400 flex items-center gap-2 mb-2">
+                                    <ShieldAlert className="h-5 w-5" />
+                                    التهديدات (Threats)
+                                </h4>
+                                <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {swotData?.threats.length ? swotData.threats.map(t => <li key={t}>{t}</li>) : <li>استمرار الفجوات الرقمية في التنسيق الميداني</li>}
+                                </ul>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         )}
 
         <Card>
           <CardHeader>
             <CardTitle>عرض الخرائط (GIS)</CardTitle>
             <CardDescription>
-             سيتم هنا عرض خريطة تفاعلية للعمالات باستخدام مكتبات مثل Leaflet.js. سيتم تلوين كل منطقة بناءً على درجة الصمود الإجمالية المحفوظة (أخضر {'>'} 3.5، أصفر 2.5-3.5، أحمر {'<'} 2.5). النقر على منطقة سيعرض اسمها ودرجتها. (قيد التطوير)
+             سيتم هنا عرض خريطة تفاعلية للعمالات باستخدام مكتبات مثل Leaflet.js. سيتم تلوين كل منطقة بناءً على درجة الصمود الإجمالية المحفوظة (أخضر {' > '} 3.5، أصفر 2.5-3.5، أحمر {' < '} 2.5). النقر على منطقة سيعرض اسمها ودرجتها. (قيد التطوير)
             </CardDescription>
           </CardHeader>
           <CardContent>
