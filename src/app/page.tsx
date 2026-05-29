@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -23,19 +24,43 @@ export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [selectedGovernorate, setSelectedGovernorate] = useState<string>('');
     const [finalAnswers, setFinalAnswers] = useState<Answers | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
     
     useEffect(() => {
         try {
-            // استخدام localStorage بدلاً من sessionStorage لضمان بقاء الجلسة حتى بعد إغلاق المتصفح
             const authStatus = localStorage.getItem('sanda-auth');
             if (authStatus === 'true') {
                 setIsAuthenticated(true);
-                setStage('landing');
+                
+                // استعادة المرحلة والعمالة إذا كان هناك تدقيق مستمر
+                const savedStage = localStorage.getItem('sanda-current-stage') as Stage;
+                const savedGov = localStorage.getItem('sanda-current-gov');
+                
+                if (savedStage === 'audit' && savedGov) {
+                    setSelectedGovernorate(savedGov);
+                    setStage('audit');
+                } else if (savedStage && savedStage !== 'login') {
+                    setStage(savedStage);
+                } else {
+                    setStage('landing');
+                }
             }
         } catch (e) {
             console.error("Failed to read auth status from localStorage", e);
+        } finally {
+            setIsInitialized(true);
         }
     }, []);
+
+    // حفظ المرحلة الحالية في localStorage عند تغيرها
+    useEffect(() => {
+        if (isAuthenticated && stage !== 'login') {
+            localStorage.setItem('sanda-current-stage', stage);
+            if (stage === 'audit' && selectedGovernorate) {
+                localStorage.setItem('sanda-current-gov', selectedGovernorate);
+            }
+        }
+    }, [stage, isAuthenticated, selectedGovernorate]);
 
 
     const handleLoginSuccess = () => {
@@ -52,6 +77,8 @@ export default function Home() {
         setIsAuthenticated(false);
          try {
             localStorage.removeItem('sanda-auth');
+            localStorage.removeItem('sanda-current-stage');
+            localStorage.removeItem('sanda-current-gov');
         } catch (e) {
              console.error("Failed to remove auth status from localStorage", e);
         }
@@ -66,17 +93,21 @@ export default function Home() {
     const handleFinishAudit = (answers: Answers) => {
         setFinalAnswers(answers);
         setStage('results');
+        localStorage.removeItem('sanda-current-gov'); // تنظيف العمالة الحالية بعد الانتهاء
     };
     
     const handleRestart = () => {
         setSelectedGovernorate('');
         setFinalAnswers(null);
         setStage('landing');
+        localStorage.removeItem('sanda-current-gov');
     };
 
     const handleGoToComparison = () => {
         setStage('comparison');
     }
+
+    if (!isInitialized) return null;
 
     if (!isAuthenticated || stage === 'login') {
         return <Login onLoginSuccess={handleLoginSuccess} />;
@@ -84,7 +115,7 @@ export default function Home() {
 
     return (
         <div className="bg-background text-foreground relative">
-             <div className="absolute top-4 left-4 z-50">
+             <div className="absolute top-4 left-4 z-50 no-print">
                 <Button onClick={handleLogout} variant="outline" size="sm">
                     <LogOut className="ml-2 h-4 w-4" />
                     تسجيل الخروج

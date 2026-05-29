@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -6,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle, Download, Home as HomeIcon, Save } from 'lucide-react';
+import { HelpCircle, Download, Home as HomeIcon, Save, CheckCircle } from 'lucide-react';
 import { surveyData, scientificNotes, Axis, Question } from '@/lib/sanda-data';
 import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
@@ -104,26 +105,32 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
   }, [currentAxisIndex, showMiniAnalysis]);
 
   useEffect(() => {
-    // Load answers from localStorage on component mount
+    // تحميل الإجابات والمحور الحالي من localStorage عند بدء المكون
     try {
       const savedAnswers = localStorage.getItem(`sanda-draft-${governorate}`);
       if (savedAnswers) {
         setAnswers(JSON.parse(savedAnswers));
       }
+      
+      const savedAxisIndex = localStorage.getItem(`sanda-current-axis-index-${governorate}`);
+      if (savedAxisIndex) {
+        setCurrentAxisIndex(parseInt(savedAxisIndex));
+      }
     } catch (e) {
-      console.error("Failed to load answers from localStorage", e);
+      console.error("Failed to load draft from localStorage", e);
     }
   }, [governorate]);
 
   useEffect(() => {
-    // Save answers to localStorage whenever they change (Auto-save)
+    // حفظ الإجابات والمحور الحالي تلقائياً عند أي تغيير
     try {
       localStorage.setItem(`sanda-draft-${governorate}`, JSON.stringify(answers));
+      localStorage.setItem(`sanda-current-axis-index-${governorate}`, currentAxisIndex.toString());
       setLastSaved(new Date().toLocaleTimeString('ar-EG'));
     } catch (e) {
       console.error("Failed to auto-save to localStorage", e);
     }
-  }, [answers, governorate]);
+  }, [answers, currentAxisIndex, governorate]);
 
 
   const currentAxisId = axisOrder[currentAxisIndex];
@@ -159,8 +166,9 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     if (currentAxisIndex < axisOrder.length - 1) {
       setShowMiniAnalysis(true);
     } else {
-      // Clear draft when finished
+      // تنظيف المسودة عند الانتهاء النهائي
       localStorage.removeItem(`sanda-draft-${governorate}`);
+      localStorage.removeItem(`sanda-current-axis-index-${governorate}`);
       onFinishAudit(answers);
     }
   };
@@ -415,12 +423,18 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
             رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
             </p>
             <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
-            {lastSaved && (
-                <div className="flex items-center justify-center gap-2 text-xs text-green-600 mt-1">
-                    <Save className="h-3 w-3" />
-                    تم الحفظ تلقائياً في: {lastSaved}
+            <div className="flex flex-col items-center gap-1 mt-1">
+                {lastSaved && (
+                    <div className="flex items-center justify-center gap-2 text-xs text-green-600">
+                        <Save className="h-3 w-3" />
+                        تم الحفظ تلقائياً في: {lastSaved}
+                    </div>
+                )}
+                <div className="flex items-center justify-center gap-2 text-xs text-primary font-bold">
+                    <CheckCircle className="h-3 w-3" />
+                    تقدم الإجابات محفوظ بالكامل
                 </div>
-            )}
+            </div>
         </div>
         <div className="absolute top-0 right-0">
              <Button onClick={onBackToHome} variant="outline">
@@ -448,7 +462,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
               <span className="text-muted-foreground font-mono">({currentAxisIndex + 1}/{axisOrder.length})</span>
             </div>
             <Progress value={progress} className="w-full h-2" />
-            <p className="text-sm text-muted-foreground mt-1 text-center">تقدم الإجابات: {Math.round(progress)}%</p>
+            <p className="text-sm text-muted-foreground mt-1 text-center">تقدم الإجابات الإجمالي: {Math.round(progress)}%</p>
           </div>
 
           <div className="space-y-8">
