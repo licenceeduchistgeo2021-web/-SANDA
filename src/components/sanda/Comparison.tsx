@@ -7,17 +7,10 @@ import type { AuditResult } from '@/components/sanda/Results';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowRight, Trash2, Download, TrendingUp, AlertTriangle, Lightbulb, ShieldAlert } from 'lucide-react';
+import { ArrowRight, Trash2, Download, CloudDownload, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { surveyData } from '@/lib/sanda-data';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-type ComparisonProps = {
-  onBackToLanding: () => void;
-};
+import { useFirestore, useCollection } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 const axisLabels: { [key: string]: string } = {
   axis1: 'الجانب التقني',
@@ -33,299 +26,33 @@ const axisColors = {
     axis4: 'rgba(192, 57, 43, 0.7)',
 };
 
-const ExportModal = ({ results }: { results: AuditResult[] }) => {
-    const { toast } = useToast();
-    const [exportType, setExportType] = useState('excel');
-    const [contentLevel, setContentLevel] = useState('summary');
-    const [selectedGov, setSelectedGov] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handlePrintReport = (result: AuditResult) => {
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            toast({ variant: 'destructive', title: "لا يمكن فتح نافذة الطباعة. يرجى تعطيل مانع النوافذ المنبثقة." });
-            return;
-        }
-
-        const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
-        
-        let reportContent = `
-            <html>
-                <head>
-                    <title>تقرير الصمود الرقمي - ${result.governorate}</title>
-                    <link rel="preconnect" href="https://fonts.googleapis.com">
-                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-                    <style>
-                        body { font-family: 'Tajawal', sans-serif; direction: rtl; background-color: white; color: black; padding: 20px; }
-                        @page { size: A4; margin: 20mm; }
-                        .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 2rem; }
-                        .print-header img { max-height: 75px; }
-                        .print-header div { text-align: center; }
-                        h1 { font-size: 22px; font-weight: bold; color: #1a5f7a; }
-                        h2 { font-size: 20px; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9em; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-                        th { background-color: #f2f2f2; }
-                        tr { page-break-inside: avoid; }
-                        .page-break { page-break-before: always; }
-                    </style>
-                </head>
-                <body>
-                    <div class="print-header">
-                         <img src="/faculty_logo.png" alt="FLSHM Logo" />
-                         <div>
-                            <h1>Master SANDA - University Hassan II</h1>
-                            <p style="font-size:1.2rem;"><strong>تقرير تقييم الصمود الرقمي الشامل</strong></p>
-                            <p><strong>العمالة:</strong> ${result.governorate}</p>
-                            <p><strong>الطالب الباحث:</strong> محمد لعرانتي</p>
-                            <p><strong>تاريخ التقرير:</strong> ${today}</p>
-                         </div>
-                         <img src="/master_logo.png" alt="Master SANDA Logo" />
-                    </div>
-        `;
-        
-        reportContent += `
-            <h2>القسم 1: ملخص النتائج ومؤشر الصمود النهائي</h2>
-            <table>
-              <tr><th>المحور</th><th>النتيجة</th></tr>
-              <tr><td>المحور الأول: الفهم</td><td>${result.scores.axis1.toFixed(2)}</td></tr>
-              <tr><td>المحور الثاني: الحوكمة</td><td>${result.scores.axis2.toFixed(2)}</td></tr>
-              <tr><td>المحور الثالث: الاستثمار</td><td>${result.scores.axis3.toFixed(2)}</td></tr>
-              <tr><td>المحور الرابع: الاستعداد</td><td>${result.scores.axis4.toFixed(2)}</td></tr>
-              <tr><th style="font-weight:bold; font-size: 1.1rem;">المؤشر النهائي للصمود</th><th style="font-weight:bold; font-size: 1.1rem;">${result.total.toFixed(2)}</th></tr>
-            </table>
-        `;
-        
-        Object.keys(surveyData).forEach(axisId => {
-            const axis = surveyData[axisId as keyof typeof surveyData];
-            reportContent += `<h2 class="page-break">القسم 2: الأجوبة التفصيلية - ${axis.title}</h2>`;
-            reportContent += `<table><thead><tr><th>السؤال</th><th>الإجابة المختارة</th><th>المستوى</th></tr></thead><tbody>`;
-            
-            const axisAnswers = result.answers?.[axisId as keyof typeof result.answers] || {};
-
-            axis.questions.forEach((q, index) => {
-                const answerValue = axisAnswers[q.id];
-                const selectedOption = q.options.find(opt => `L${opt.score}` === answerValue);
-                reportContent += `
-                    <tr>
-                        <td>${index + 1}. ${q.text}</td>
-                        <td>${selectedOption ? selectedOption.text : 'لم تتم الإجابة'}</td>
-                        <td>${answerValue || '-'}</td>
-                    </tr>
-                `;
-            });
-            reportContent += `</tbody></table>`;
-        });
-        
-        reportContent += `
-                </body>
-            </html>
-        `;
-
-        printWindow.document.write(reportContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-             printWindow.print();
-             printWindow.close();
-        }, 1000);
-    };
-
-    const handleExport = () => {
-        if (results.length === 0) {
-            toast({ variant: 'destructive', title: "لا توجد بيانات مسجلة حالياً." });
-            return;
-        }
-        
-        setIsLoading(true);
-        toast({ title: 'جاري تحضير الملف...', description: 'سيبدأ التنزيل قريباً.' });
-
-        setTimeout(() => {
-            if (exportType === 'pdf') {
-                 if (!selectedGov) {
-                    toast({ variant: 'destructive', title: "الرجاء اختيار عمالة لتصدير تقريرها."});
-                    setIsLoading(false);
-                    return;
-                 }
-                 const resultToPrint = results.find(r => r.governorate === selectedGov);
-                 if (resultToPrint) {
-                    handlePrintReport(resultToPrint);
-                 } else {
-                    toast({ variant: 'destructive', title: "لم يتم العثور على بيانات للعمالة المختارة."});
-                 }
-            } else {
-                handleExportCsv(contentLevel === 'detailed');
-            }
-            setIsLoading(false);
-        }, 1000);
-    };
-    
-    const handleExportCsv = (detailed: boolean) => {
-        let headers = [ "العمالة", "المؤشر النهائي", "الحكامة", "الجانب التقني", "الاستثمار", "التكوين", "تاريخ التسجيل" ];
-        const allQuestions: { axisId: string, qId: string, text: string }[] = [];
-        
-        if (detailed) {
-            Object.keys(surveyData).forEach(axisId => {
-                const axis = surveyData[axisId as keyof typeof surveyData];
-                axis.questions.forEach(q => {
-                    headers.push(`"${axis.title.replace(/"/g, '""')}: ${q.id}: ${q.text.substring(0,50).replace(/"/g, '""')}..."`);
-                    allQuestions.push({axisId, qId: q.id, text: q.text});
-                });
-            });
-        }
-
-        const rows = results.map(result => {
-            const timestamp = new Date(result.timestamp).toLocaleString('ar-EG');
-            const row = [
-                `"${result.governorate}"`,
-                result.total.toFixed(2),
-                result.scores.axis2.toFixed(2),
-                result.scores.axis1.toFixed(2),
-                result.scores.axis3.toFixed(2),
-                result.scores.axis4.toFixed(2),
-                `"${timestamp}"`
-            ];
-
-            if (detailed) {
-                allQuestions.forEach(({axisId, qId}) => {
-                    const axisAnswers = result.answers?.[axisId as keyof typeof result.answers] || {};
-                    const answer = axisAnswers[qId] || 'N/A';
-                    const questionData = surveyData[axisId as keyof typeof surveyData].questions.find(q => q.id === qId);
-                    const option = questionData?.options.find(opt => `L${opt.score}` === answer);
-                    row.push(`"${option ? option.text.replace(/"/g, '""') : 'لم تتم الإجابة'}"`);
-                });
-            }
-            
-            return row.join(',');
-        });
-        
-        const csvContent = "\uFEFF" + [headers.join(','), ...rows].join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `SANDA_Data_${detailed ? 'Detailed' : 'Summary'}_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-
-    return (
-        <DialogContent dir="rtl" className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>إعدادات تصدير البيانات</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-                <div>
-                    <Label className="font-bold mb-2 block">نوع التصدير</Label>
-                    <RadioGroup value={exportType} onValueChange={setExportType} className="flex gap-4">
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="excel" id="excel" />
-                            <Label htmlFor="excel">قاعدة البيانات الكاملة (CSV)</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                            <RadioGroupItem value="pdf" id="pdf" />
-                            <Label htmlFor="pdf">تقرير شامل لعمالة واحدة (PDF)</Label>
-                        </div>
-                    </RadioGroup>
-                </div>
-
-                {exportType === 'pdf' && (
-                     <div>
-                        <Label htmlFor="gov-select" className="font-bold mb-2 block">اختر العمالة</Label>
-                        <Select dir="rtl" value={selectedGov} onValueChange={setSelectedGov}>
-                            <SelectTrigger id="gov-select">
-                                <SelectValue placeholder="اختر عمالة..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {results.map(r => (
-                                    <SelectItem key={r.governorate} value={r.governorate}>{r.governorate}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-                
-                {exportType === 'excel' && (
-                  <div>
-                      <Label className="font-bold mb-2 block">مستوى المحتوى</Label>
-                      <RadioGroup value={contentLevel} onValueChange={setContentLevel} className="flex gap-4">
-                          <div className="flex items-center space-x-2 space-x-reverse">
-                              <RadioGroupItem value="summary" id="summary" />
-                              <Label htmlFor="summary">المؤشرات النهائية فقط</Label>
-                          </div>
-                          <div className="flex items-center space-x-2 space-x-reverse">
-                              <RadioGroupItem value="detailed" id="detailed" />
-                              <Label htmlFor="detailed">الأجوبة التفصيلية والتحليل</Label>
-                          </div>
-                      </RadioGroup>
-                  </div>
-                )}
-
-            </div>
-            <Button onClick={handleExport} className="w-full" disabled={isLoading}>
-                {isLoading ? 'جاري التحضير...' : 'تصدير'}
-            </Button>
-        </DialogContent>
-    );
-};
-
-
-export default function Comparison({ onBackToLanding }: ComparisonProps) {
+export default function Comparison({ onBackToLanding }: { onBackToLanding: () => void }) {
   const [results, setResults] = useState<AuditResult[]>([]);
-  const [minScores, setMinScores] = useState<{ [key: string]: number }>({});
+  const [useCloudData, setUseCloudData] = useState(false);
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { toast } = useToast();
+  const db = useFirestore();
+
+  const reportsQuery = useMemo(() => {
+    if (!db) return null;
+    return query(collection(db, 'reports'), orderBy('timestamp', 'desc'));
+  }, [db]);
+
+  const { data: cloudReports, loading: cloudLoading } = useCollection(reportsQuery);
 
   useEffect(() => {
-    try {
-      const storedResultsRaw = localStorage.getItem('sandaAuditResults');
-      if (storedResultsRaw) {
-        const parsedResults: AuditResult[] = JSON.parse(storedResultsRaw);
-        setResults(parsedResults);
-
-        if (parsedResults.length > 0) {
-          const newMinScores: { [key: string]: number } = {};
-          Object.keys(parsedResults[0].scores).forEach(axis => {
-            const scores = parsedResults.map(r => r.scores[axis as keyof typeof r.scores]);
-            newMinScores[axis] = Math.min(...scores);
-          });
-          setMinScores(newMinScores);
-        }
-      } else {
-        toast({
-            variant: "destructive",
-            title: "لا توجد بيانات",
-            description: "يرجى ملء ونشر بيانات عمالة واحدة على الأقل أولاً."
-        })
-      }
-    } catch (error) {
-      console.error("Failed to load results from localStorage", error);
-      toast({
-            variant: "destructive",
-            title: "خطأ في تحميل البيانات",
-            description: "لم نتمكن من تحميل البيانات من الذاكرة المحلية."
-      })
+    if (useCloudData && cloudReports) {
+      setResults(cloudReports as unknown as AuditResult[]);
+    } else {
+      const stored = localStorage.getItem('sandaAuditResults');
+      if (stored) setResults(JSON.parse(stored));
     }
-  }, [toast]);
-
-  const handleClearData = () => {
-    if (window.confirm("هل أنت متأكد من أنك تريد حذف جميع بيانات المقارنة؟ لا يمكن التراجع عن هذا الإجراء.")) {
-        localStorage.removeItem('sandaAuditResults');
-        setResults([]);
-        setMinScores({});
-        toast({ title: "تم حذف جميع البيانات بنجاح."})
-    }
-  };
+  }, [useCloudData, cloudReports]);
 
   useEffect(() => {
     if (chartRef.current && results.length > 0) {
-        if (chartInstance.current) {
-            chartInstance.current.destroy();
-        }
+        if (chartInstance.current) chartInstance.current.destroy();
         const ctx = chartRef.current.getContext('2d');
         if (ctx) {
             chartInstance.current = new Chart(ctx, {
@@ -336,82 +63,16 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
                         label: axisLabels[axisKey],
                         data: results.map(r => r.scores[axisKey as keyof typeof r.scores]),
                         backgroundColor: axisColors[axisKey as keyof typeof axisColors],
-                        borderColor: axisColors[axisKey as keyof typeof axisColors].replace('0.7', '1'),
-                        borderWidth: 1,
                     }))
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
                     indexAxis: 'y',
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            max: 5,
-                            ticks: { color: 'hsl(var(--foreground))' },
-                            grid: { color: 'hsl(var(--border))' }
-                        },
-                        y: {
-                            ticks: { color: 'hsl(var(--foreground))' },
-                            grid: { color: 'hsl(var(--border))' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: 'hsl(var(--foreground))',
-                                font: { family: 'Tajawal' }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'مقارنة درجات الصمود بين العمالات',
-                            color: 'hsl(var(--foreground))',
-                            font: { size: 18, family: 'Tajawal' }
-                        }
-                    }
+                    scales: { x: { beginAtZero: true, max: 5 } },
+                    plugins: { legend: { labels: { font: { family: 'Tajawal' } } } }
                 }
             });
         }
     }
-     return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
-  }, [results]);
-
-  // SWOT Analysis Logic
-  const swotData = useMemo(() => {
-    if (results.length === 0) return null;
-
-    const aggregateScores: { [key: string]: number[] } = {
-        axis1: [], axis2: [], axis3: [], axis4: []
-    };
-
-    results.forEach(r => {
-        Object.keys(r.scores).forEach(axis => {
-            aggregateScores[axis].push(r.scores[axis as keyof typeof r.scores]);
-        });
-    });
-
-    const averages = Object.keys(aggregateScores).map(axis => ({
-        id: axis,
-        name: axisLabels[axis],
-        avg: aggregateScores[axis].reduce((a, b) => a + b, 0) / results.length
-    }));
-
-    const strengths = averages.filter(a => a.avg >= 3.5).map(a => a.name);
-    const weaknesses = averages.filter(a => a.avg < 2.5).map(a => a.name);
-    
-    // Opportunities: Areas with mid-range scores that can be improved
-    const opportunities = averages.filter(a => a.avg >= 2.5 && a.avg < 3.5).map(a => `تطوير ${a.name} لرفع مستوى الصمود`);
-    
-    // Threats: Areas with very low scores or critical governance issues
-    const threats = averages.filter(a => a.avg < 2.0).map(a => `هشاشة حادة في ${a.name} قد تعيق التعافي`);
-
-    return { strengths, weaknesses, opportunities, threats };
   }, [results]);
 
   return (
@@ -421,154 +82,57 @@ export default function Comparison({ onBackToLanding }: ComparisonProps) {
             <h1 className="text-4xl font-bold text-primary mb-2">لوحة المقارنة</h1>
             <p className="text-lg text-muted-foreground">تحليل مقارن لمستويات الصمود بين العمالات</p>
         </div>
-        <Button onClick={onBackToLanding} variant="outline">
-          <ArrowRight className="ml-2 h-4 w-4" />
-          العودة إلى الصفحة الرئيسية
-        </Button>
+        <div className="flex gap-4">
+            <Button onClick={() => setUseCloudData(!useCloudData)} variant={useCloudData ? "default" : "outline"}>
+                {useCloudData ? (
+                    <><CloudDownload className="ml-2 h-4 w-4" /> بيانات السحابة</>
+                ) : (
+                    "بيانات محلية"
+                )}
+            </Button>
+            <Button onClick={onBackToLanding} variant="outline">
+                <ArrowRight className="ml-2 h-4 w-4" />
+                العودة
+            </Button>
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>مقارنة النتائج</CardTitle>
-            <CardDescription>
-              يعرض هذا الجدول نتائج التدقيق لكل عمالة، مع تمييز أقل درجة في كل محور لتحديد فجوات الصمود الجغرافية.
-            </CardDescription>
+            <CardTitle>مقارنة النتائج {useCloudData && cloudLoading && <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />}</CardTitle>
           </CardHeader>
           <CardContent>
-            {results.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead className="font-bold">إسم العمالة</TableHead>
-                        {Object.keys(axisLabels).map(axisKey => (
-                            <TableHead key={axisKey} className="text-center">{axisLabels[axisKey]}</TableHead>
-                        ))}
-                        <TableHead className="text-center font-bold">إجمالي الصمود</TableHead>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="text-right">إسم العمالة</TableHead>
+                        <TableHead className="text-center">الحكامة</TableHead>
+                        <TableHead className="text-center">الجانب التقني</TableHead>
+                        <TableHead className="text-center">الاستثمار</TableHead>
+                        <TableHead className="text-center">التكوين</TableHead>
+                        <TableHead className="text-center font-bold">الإجمالي</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {results.map((result, idx) => (
+                        <TableRow key={idx}>
+                            <TableCell className="font-medium text-right">{result.governorate}</TableCell>
+                            <TableCell className="text-center">{result.scores.axis2.toFixed(2)}</TableCell>
+                            <TableCell className="text-center">{result.scores.axis1.toFixed(2)}</TableCell>
+                            <TableCell className="text-center">{result.scores.axis3.toFixed(2)}</TableCell>
+                            <TableCell className="text-center">{result.scores.axis4.toFixed(2)}</TableCell>
+                            <TableCell className="text-center font-bold text-primary">{result.total.toFixed(2)}</TableCell>
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {results.map((result) => (
-                        <TableRow key={result.governorate}>
-                            <TableCell className="font-medium">{result.governorate}</TableCell>
-                            {Object.keys(axisLabels).map(axisKey => {
-                                const score = result.scores[axisKey as keyof typeof result.scores];
-                                const isMin = score === minScores[axisKey];
-                                return (
-                                <TableCell key={axisKey} className={`text-center font-mono text-lg ${isMin ? 'bg-red-500/20 text-red-900 dark:text-red-200' : ''}`}>
-                                    {score.toFixed(2)}
-                                </TableCell>
-                                );
-                            })}
-                            <TableCell className="text-center font-bold text-primary text-lg">{result.total.toFixed(2)}</TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                    </Table>
-                </div>
-            ) : (
-                <p className="text-center text-muted-foreground py-8">لا توجد بيانات محفوظة للمقارنة. يرجى إكمال تدقيق واحد على الأقل.</p>
-            )}
-             {results.length > 0 && (
-                <div className="mt-6 flex justify-end gap-2">
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline">
-                               <Download className="ml-2 h-4 w-4" />
-                               تصدير البيانات
-                            </Button>
-                        </DialogTrigger>
-                        <ExportModal results={results} />
-                    </Dialog>
-                    <Button onClick={handleClearData} variant="destructive">
-                        <Trash2 className="ml-2 h-4 w-4" />
-                        حذف جميع البيانات
-                    </Button>
-                </div>
-            )}
+                    ))}
+                </TableBody>
+            </Table>
           </CardContent>
         </Card>
-        
-        {results.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>التصور الإحصائي</CardTitle>
-                        <CardDescription>
-                            مقارنة مرئية لدرجات المحاور الأربعة لكل عمالة.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="relative h-[400px]">
-                            <canvas ref={chartRef}></canvas>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>تحليل SWOT للمنطقة</CardTitle>
-                        <CardDescription>
-                            تحليل نقاط القوة والضعف والفرص والتهديدات بناءً على النتائج المجمعة.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-900">
-                                <h4 className="font-bold text-green-700 dark:text-green-400 flex items-center gap-2 mb-2">
-                                    <TrendingUp className="h-5 w-5" />
-                                    نقاط القوة (Strengths)
-                                </h4>
-                                <ul className="text-sm space-y-1 list-disc list-inside">
-                                    {swotData?.strengths.length ? swotData.strengths.map(s => <li key={s}>{s}</li>) : <li>لا توجد نقاط قوة بارزة (أقل من 3.5)</li>}
-                                </ul>
-                            </div>
-                            <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-900">
-                                <h4 className="font-bold text-red-700 dark:text-red-400 flex items-center gap-2 mb-2">
-                                    <AlertTriangle className="h-5 w-5" />
-                                    نقاط الضعف (Weaknesses)
-                                </h4>
-                                <ul className="text-sm space-y-1 list-disc list-inside">
-                                    {swotData?.weaknesses.length ? swotData.weaknesses.map(w => <li key={w}>{w}</li>) : <li>لا توجد نقاط ضعف حادة (فوق 2.5)</li>}
-                                </ul>
-                            </div>
-                            <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
-                                <h4 className="font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2 mb-2">
-                                    <Lightbulb className="h-5 w-5" />
-                                    الفرص (Opportunities)
-                                </h4>
-                                <ul className="text-sm space-y-1 list-disc list-inside">
-                                    {swotData?.opportunities.length ? swotData.opportunities.map(o => <li key={o}>{o}</li>) : <li>تحسين المحاور المتوسطة لرفع مؤشر الصمود</li>}
-                                </ul>
-                            </div>
-                            <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border border-orange-200 dark:border-orange-900">
-                                <h4 className="font-bold text-orange-700 dark:text-orange-400 flex items-center gap-2 mb-2">
-                                    <ShieldAlert className="h-5 w-5" />
-                                    التهديدات (Threats)
-                                </h4>
-                                <ul className="text-sm space-y-1 list-disc list-inside">
-                                    {swotData?.threats.length ? swotData.threats.map(t => <li key={t}>{t}</li>) : <li>استمرار الفجوات الرقمية في التنسيق الميداني</li>}
-                                </ul>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        )}
 
         <Card>
-          <CardHeader>
-            <CardTitle>عرض الخرائط (GIS)</CardTitle>
-            <CardDescription>
-             سيتم هنا عرض خريطة تفاعلية للعمالات باستخدام مكتبات مثل Leaflet.js. سيتم تلوين كل منطقة بناءً على درجة الصمود الإجمالية المحفوظة (أخضر {' > '} 3.5، أصفر 2.5-3.5، أحمر {' < '} 2.5). النقر على منطقة سيعرض اسمها ودرجتها. (قيد التطوير)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">مكان مخصص لعرض الخريطة التفاعلية</p>
-            </div>
-          </CardContent>
+            <CardHeader><CardTitle>التصور الإحصائي</CardTitle></CardHeader>
+            <CardContent><div className="relative h-[400px]"><canvas ref={chartRef}></canvas></div></CardContent>
         </Card>
       </main>
     </div>

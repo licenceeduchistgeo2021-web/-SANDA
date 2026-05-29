@@ -1,0 +1,37 @@
+
+{
+  "entities": {
+    "AuditReport": {
+      "title": "Audit Report",
+      "description": "A complete audit report for a governorate including detailed answers.",
+      "type": "object",
+      "properties": {
+        "governorate": { "type": "string" },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "axis1": { "type": "number" },
+            "axis2": { "type": "number" },
+            "axis3": { "type": "number" },
+            "axis4": { "type": "number" }
+          }
+        },
+        "total": { "type": "number" },
+        "answers": { "type": "object" },
+        "timestamp": { "type": "number" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" }
+      },
+      "required": ["governorate", "scores", "total", "answers", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/reports/{reportId}": {
+      "schema": "#/backend/entities/AuditReport",
+      "description": "Collection of final audit reports for all governorates."
+    }
+  }
+}
