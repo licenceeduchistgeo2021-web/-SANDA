@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
@@ -89,14 +88,10 @@ function calculateAxisScore(axisId: keyof typeof axisWeights, answers: Answers) 
     
     if (!axisAnswers) return 0;
 
-    const questions = Object.keys(axisAnswers);
-    // Assuming 20 questions per axis based on the new structure
-    const numQuestions = 20;
-
+    const numQuestions = surveyData[axisId].questions.length;
 
     for (let i = 1; i <= numQuestions; i++) {
         let qKey = 'q' + i;
-        // Ensure we check if the answer exists for the question key
         if(axisAnswers[qKey]) {
             let score = parseInt(axisAnswers[qKey]?.replace('L', '') || '0');
             let weight = (weightsForAxis as any)[qKey] || weightsForAxis.default;
@@ -227,9 +222,13 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
         
         const updatedResults = [...filteredResults, newResult];
         localStorage.setItem('sandaAuditResults', JSON.stringify(updatedResults));
+        
+        // Clear in-progress draft after successful completion
+        localStorage.removeItem(`sanda-draft-${governorate}`);
+
         toast({
           title: "تم حفظ البيانات بنجاح",
-          description: "يمكنك الآن استخراج التقارير."
+          description: "تم تحديث التقرير النهائي في قاعدة البيانات المحلية."
         })
     } catch (error) {
         console.error("Failed to save results to localStorage", error);
@@ -482,6 +481,3 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
     </div>
   );
 }
-
-    
-    

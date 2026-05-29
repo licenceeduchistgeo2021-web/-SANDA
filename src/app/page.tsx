@@ -26,13 +26,14 @@ export default function Home() {
     
     useEffect(() => {
         try {
-            const authStatus = sessionStorage.getItem('sanda-auth');
+            // استخدام localStorage بدلاً من sessionStorage لضمان بقاء الجلسة حتى بعد إغلاق المتصفح
+            const authStatus = localStorage.getItem('sanda-auth');
             if (authStatus === 'true') {
                 setIsAuthenticated(true);
                 setStage('landing');
             }
         } catch (e) {
-            console.error("Failed to read auth status from sessionStorage", e);
+            console.error("Failed to read auth status from localStorage", e);
         }
     }, []);
 
@@ -40,9 +41,9 @@ export default function Home() {
     const handleLoginSuccess = () => {
         setIsAuthenticated(true);
         try {
-            sessionStorage.setItem('sanda-auth', 'true');
+            localStorage.setItem('sanda-auth', 'true');
         } catch (e) {
-             console.error("Failed to save auth status to sessionStorage", e);
+             console.error("Failed to save auth status to localStorage", e);
         }
         setStage('landing');
     };
@@ -50,9 +51,9 @@ export default function Home() {
     const handleLogout = () => {
         setIsAuthenticated(false);
          try {
-            sessionStorage.removeItem('sanda-auth');
+            localStorage.removeItem('sanda-auth');
         } catch (e) {
-             console.error("Failed to remove auth status from sessionStorage", e);
+             console.error("Failed to remove auth status from localStorage", e);
         }
         setStage('login');
     };

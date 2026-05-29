@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -7,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle, Download, Home as HomeIcon } from 'lucide-react';
+import { HelpCircle, Download, Home as HomeIcon, Save } from 'lucide-react';
 import { surveyData, scientificNotes, Axis, Question } from '@/lib/sanda-data';
 import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
@@ -85,6 +84,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
   });
   const [showMiniAnalysis, setShowMiniAnalysis] = useState(false);
   const [printData, setPrintData] = useState<{axis: Axis; score: number; interpretation: {title: string, description: string}; answers: Answers[keyof Answers]} | null>(null);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [facultyLogoError, setFacultyLogoError] = useState(false);
   const [masterLogoError, setMasterLogoError] = useState(false);
 
@@ -106,7 +106,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
   useEffect(() => {
     // Load answers from localStorage on component mount
     try {
-      const savedAnswers = localStorage.getItem(`sanda-in-progress-audit-${governorate}`);
+      const savedAnswers = localStorage.getItem(`sanda-draft-${governorate}`);
       if (savedAnswers) {
         setAnswers(JSON.parse(savedAnswers));
       }
@@ -116,11 +116,12 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
   }, [governorate]);
 
   useEffect(() => {
-    // Save answers to localStorage whenever they change
+    // Save answers to localStorage whenever they change (Auto-save)
     try {
-      localStorage.setItem(`sanda-in-progress-audit-${governorate}`, JSON.stringify(answers));
+      localStorage.setItem(`sanda-draft-${governorate}`, JSON.stringify(answers));
+      setLastSaved(new Date().toLocaleTimeString('ar-EG'));
     } catch (e) {
-      console.error("Failed to save answers to localStorage", e);
+      console.error("Failed to auto-save to localStorage", e);
     }
   }, [answers, governorate]);
 
@@ -158,6 +159,8 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     if (currentAxisIndex < axisOrder.length - 1) {
       setShowMiniAnalysis(true);
     } else {
+      // Clear draft when finished
+      localStorage.removeItem(`sanda-draft-${governorate}`);
       onFinishAudit(answers);
     }
   };
@@ -412,6 +415,12 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
             رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
             </p>
             <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
+            {lastSaved && (
+                <div className="flex items-center justify-center gap-2 text-xs text-green-600 mt-1">
+                    <Save className="h-3 w-3" />
+                    تم الحفظ تلقائياً في: {lastSaved}
+                </div>
+            )}
         </div>
         <div className="absolute top-0 right-0">
              <Button onClick={onBackToHome} variant="outline">
