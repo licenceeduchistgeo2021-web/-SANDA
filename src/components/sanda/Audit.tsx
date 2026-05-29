@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,7 +11,7 @@ import { HelpCircle, Download, Home as HomeIcon, Save, CheckCircle } from 'lucid
 import { surveyData, scientificNotes, Axis, Question } from '@/lib/sanda-data';
 import { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
-import {motion, AnimatePresence} from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 type AuditProps = {
@@ -86,8 +86,8 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
   const [showMiniAnalysis, setShowMiniAnalysis] = useState(false);
   const [printData, setPrintData] = useState<{axis: Axis; score: number; interpretation: {title: string, description: string}; answers: Answers[keyof Answers]} | null>(null);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
-  const [facultyLogoError, setFacultyLogoError] = useState(false);
-  const [masterLogoError, setMasterLogoError] = useState(false);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const isFirstRender = useRef(true);
 
     useEffect(() => {
     if (printData) {
@@ -104,8 +104,8 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     window.scrollTo(0, 0);
   }, [currentAxisIndex, showMiniAnalysis]);
 
+  // المرحلة 1: تحميل المسودة عند بدء المكون
   useEffect(() => {
-    // تحميل الإجابات والمحور الحالي من localStorage عند بدء المكون
     try {
       const savedAnswers = localStorage.getItem(`sanda-draft-${governorate}`);
       if (savedAnswers) {
@@ -118,19 +118,34 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
       }
     } catch (e) {
       console.error("Failed to load draft from localStorage", e);
+    } finally {
+      setIsDraftLoaded(true);
     }
   }, [governorate]);
 
+  // المرحلة 2: الحفظ التلقائي عند أي تغيير، فقط بعد التأكد من تحميل المسودة
   useEffect(() => {
-    // حفظ الإجابات والمحور الحالي تلقائياً عند أي تغيير
+    if (!isDraftLoaded) return;
+    
+    // تجنب الحفظ في أول رندر بعد التحميل إذا لم يتغير شيء فعلياً
+    if (isFirstRender.current) {
+        isFirstRender.current = false;
+        return;
+    }
+
     try {
       localStorage.setItem(`sanda-draft-${governorate}`, JSON.stringify(answers));
       localStorage.setItem(`sanda-current-axis-index-${governorate}`, currentAxisIndex.toString());
-      setLastSaved(new Date().toLocaleTimeString('ar-EG'));
+      // استخدام تنسيق وقت ثابت لتجنب مشاكل الهيدرة
+      const now = new Date();
+      const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                     now.getMinutes().toString().padStart(2, '0') + ':' + 
+                     now.getSeconds().toString().padStart(2, '0');
+      setLastSaved(timeStr);
     } catch (e) {
       console.error("Failed to auto-save to localStorage", e);
     }
-  }, [answers, currentAxisIndex, governorate]);
+  }, [answers, currentAxisIndex, governorate, isDraftLoaded]);
 
 
   const currentAxisId = axisOrder[currentAxisIndex];
@@ -166,7 +181,6 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     if (currentAxisIndex < axisOrder.length - 1) {
       setShowMiniAnalysis(true);
     } else {
-      // تنظيف المسودة عند الانتهاء النهائي
       localStorage.removeItem(`sanda-draft-${governorate}`);
       localStorage.removeItem(`sanda-current-axis-index-${governorate}`);
       onFinishAudit(answers);
@@ -247,32 +261,14 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
     return (
         <div className="print-container bg-white text-black p-8" dir="rtl">
             <header className="text-center border-b-2 border-black pb-4 mb-8 flex justify-between items-center">
-               {facultyLogoError ? (
-                  <span className="font-bold">LOGO_FLSHM</span>
-                ) : (
-                  <img
-                    src="/faculty_logo.png"
-                    alt="FLSHM Logo"
-                    style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
-                    onError={() => setFacultyLogoError(true)}
-                  />
-                )}
+               <img src="/faculty_logo.png" alt="FLSHM Logo" style={{maxHeight: '75px'}} />
                 <div>
                     <h1 className="text-2xl font-bold text-primary">تقرير تقييم الصمود الرقمي - Master SANDA</h1>
                     <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
                     <p className="text-md"><strong>الطالب الباحث:</strong> محمد لعرانتي</p>
                     <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
                 </div>
-                {masterLogoError ? (
-                  <span className="font-bold">LOGO_MASTER</span>
-                ) : (
-                  <img
-                    src="/master_logo.png"
-                    alt="Master SANDA Logo"
-                    style={{maxHeight: '75px', width: 'auto', zIndex: 9999}}
-                    onError={() => setMasterLogoError(true)}
-                  />
-                )}
+                <img src="/master_logo.png" alt="Master SANDA Logo" style={{maxHeight: '75px'}} />
             </header>
             
             <section className="mb-8 page-break-after">
@@ -330,30 +326,6 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                         width: 100%;
                         z-index: 9999;
                     }
-                    .page-break-after {
-                        page-break-after: always;
-                    }
-                    .page-break-inside-avoid {
-                        page-break-inside: avoid;
-                    }
-                    table {
-                        width: 100%;
-                    }
-                    th, td {
-                        padding: 8px;
-                        border: 1px solid #ddd;
-                    }
-                    .no-print {
-                        display: none;
-                    }
-                }
-                .print-container {
-                  display: none;
-                }
-                @media print {
-                  .print-container {
-                    display: block;
-                  }
                 }
             `}</style>
         </div>
@@ -425,7 +397,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
             <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
             <div className="flex flex-col items-center gap-1 mt-1">
                 {lastSaved && (
-                    <div className="flex items-center justify-center gap-2 text-xs text-green-600">
+                    <div className="flex items-center justify-center gap-2 text-xs text-green-600 font-bold animate-pulse">
                         <Save className="h-3 w-3" />
                         تم الحفظ تلقائياً في: {lastSaved}
                     </div>
