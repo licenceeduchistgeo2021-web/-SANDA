@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { HelpCircle, Download, Home as HomeIcon, Save, CheckCircle } from 'lucide-react';
 import { surveyData, scientificNotes, Axis, Question } from '@/lib/sanda-data';
-import { Answers } from '@/app/page';
+import type { Answers } from '@/app/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
 import { motion, AnimatePresence } from 'framer-motion'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -20,7 +20,7 @@ type AuditProps = {
   onBackToHome: () => void;
 };
 
-const axisOrder: (keyof typeof surveyData)[] = ['axis1', 'axis2', 'axis3', 'axis4'];
+const axisOrder: ('axis1' | 'axis2' | 'axis3' | 'axis4')[] = ['axis1', 'axis2', 'axis3', 'axis4'];
 
 const axisWeights = {
     axis1: { q1: 1.5, q7: 1.5, q8: 1.4, q9: 1.4, default: 1.0 },
@@ -46,7 +46,7 @@ function getInterpretation(score: number) {
 }
 
 
-function calculateAxisScore(axisId: keyof typeof surveyData, answers: Answers) {
+function calculateAxisScore(axisId: 'axis1' | 'axis2' | 'axis3' | 'axis4', answers: Answers) {
     let totalWeightedScore = 0;
     let totalWeights = 0;
     const weightsForAxis = axisWeights[axisId];

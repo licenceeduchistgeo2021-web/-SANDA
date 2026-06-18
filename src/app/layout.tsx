@@ -8,6 +8,9 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'SANDA Audit Tool',
   description: 'An audit tool for governorates.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

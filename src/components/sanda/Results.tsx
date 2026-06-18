@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Chart from 'chart.js/auto';
 import { Button } from '@/components/ui/button';
-import { Answers } from '@/app/page';
+import type { Answers } from '@/app/page';
 import { useToast } from '@/hooks/use-toast';
 import { Download, RotateCcw, CloudUpload, CheckCircle2 } from 'lucide-react';
 import { surveyData } from '@/lib/sanda-data';
