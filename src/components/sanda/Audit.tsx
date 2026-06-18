@@ -265,7 +265,9 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                 <div>
                     <h1 className="text-2xl font-bold text-primary">تقرير تقييم الصمود الرقمي - Master SANDA</h1>
                     <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
-                    <p className="text-md"><strong>الطالب الباحث:</strong> محمد لعرانتي</p>
+                    <p className="text-
+                    md"><strong>الطالب الباحث:</strong>محمد أمين لرانتي</p>
+                    <p>تحت إشراف الأستاذة: رشيدة المرابط</p>
                     <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
                 </div>
                 <img src="/master_logo.png" alt="Master SANDA Logo" style={{maxHeight: '75px'}} />
@@ -392,7 +394,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
       <header className="max-w-5xl mx-auto mb-8 relative no-print">
         <div className="text-center">
             <p className="text-sm text-muted-foreground">
-            رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
+            رسالة الماستر:  تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
             </p>
             <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
             <div className="flex flex-col items-center gap-1 mt-1">
