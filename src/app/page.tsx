@@ -2,13 +2,19 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Landing from '@/components/sanda/Landing';
 import Audit from '@/components/sanda/Audit';
 import Results from '@/components/sanda/Results';
 import Comparison from '@/components/sanda/Comparison';
 import Login from '@/components/sanda/Login';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, ChevronRight } from 'lucide-react';
+
+const VulnerabilityMap = dynamic(() => import('@/components/sanda/VulnerabilityMap'), {
+  ssr: false,
+  loading: () => <div className="w-full h-[600px] bg-slate-100 rounded-lg animate-pulse" />
+});
 
 export type Answers = {
     axis1: { [key: string]: string };
@@ -17,7 +23,7 @@ export type Answers = {
     axis4: { [key: string]: string };
 };
 
-export type Stage = 'login' | 'landing' | 'audit' | 'results' | 'comparison';
+export type Stage = 'login' | 'landing' | 'audit' | 'results' | 'comparison' | 'maps';
 
 export default function Home() {
     const [stage, setStage] = useState<Stage>('login');
@@ -105,7 +111,11 @@ export default function Home() {
 
     const handleGoToComparison = () => {
         setStage('comparison');
-    }
+    };
+
+    const handleGoToMaps = () => {
+        setStage('maps');
+    };
 
     if (!isInitialized) return null;
 
@@ -121,7 +131,7 @@ export default function Home() {
                     تسجيل الخروج
                 </Button>
             </div>
-            {stage === 'landing' && <Landing onStartAudit={handleStartAudit} onGoToComparison={handleGoToComparison} />}
+            {stage === 'landing' && <Landing onStartAudit={handleStartAudit} onGoToComparison={handleGoToComparison} onGoToMaps={handleGoToMaps} />}
             {stage === 'audit' && <Audit governorate={selectedGovernorate} onFinishAudit={handleFinishAudit} onBackToHome={handleRestart} />}
             {stage === 'results' && finalAnswers && (
                 <Results
@@ -131,6 +141,21 @@ export default function Home() {
                 />
             )}
             {stage === 'comparison' && <Comparison onBackToLanding={handleRestart} />}
+            {stage === 'maps' && (
+                <div className="min-h-screen bg-background text-foreground">
+                    <div className="container mx-auto px-4 py-8">
+                        <Button
+                            onClick={handleRestart}
+                            variant="outline"
+                            className="mb-6"
+                        >
+                            <ChevronRight className="mr-2 h-4 w-4 rotate-180" />
+                            العودة إلى الصفحة الرئيسية
+                        </Button>
+                        <VulnerabilityMap />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

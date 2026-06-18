@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Chart from 'chart.js/auto';
 import { Button } from '@/components/ui/button';
 import { Answers } from '@/app/page';
@@ -12,6 +13,11 @@ import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+
+const VulnerabilityMap = dynamic(() => import('./VulnerabilityMap'), {
+  ssr: false,
+  loading: () => <div className="w-full h-[600px] bg-slate-100 rounded-lg animate-pulse" />
+});
 
 const axisWeights = {
     axis1: { q1: 1.5, q7: 1.5, q8: 1.4, q9: 1.4, default: 1.0 },
@@ -215,6 +221,10 @@ export default function Results({ governorate, answers, onRestart }: ResultsProp
 
         <div className="max-w-2xl mx-auto mb-12">
             <canvas ref={chartRef}></canvas>
+        </div>
+
+        <div className="mb-12">
+            <VulnerabilityMap />
         </div>
 
         <div className="mt-12 text-center flex justify-center gap-4 no-print">

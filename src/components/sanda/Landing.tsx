@@ -41,6 +41,7 @@ const governorates = [
 type LandingProps = {
   onStartAudit: (governorate: string) => void;
   onGoToComparison: () => void;
+  onGoToMaps: () => void;
 };
 
 
@@ -288,7 +289,7 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
     );
 };
 
-export default function Landing({ onStartAudit, onGoToComparison }: LandingProps) {
+export default function Landing({ onStartAudit, onGoToComparison, onGoToMaps }: LandingProps) {
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>('');
   const [completedAudits, setCompletedAudits] = useState<AuditResult[]>([]);
   const [facultyLogoError, setFacultyLogoError] = useState(false);
@@ -472,7 +473,7 @@ export default function Landing({ onStartAudit, onGoToComparison }: LandingProps
                 </p>
               </CardContent>
             </Card>
-            <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
+            <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer hover:border-primary/50" onClick={onGoToMaps}>
               <CardHeader>
                 <div className="mx-auto bg-primary/10 rounded-full p-4 w-fit mb-4">
                   <Map className="h-8 w-8 text-primary" />
