@@ -20,7 +20,7 @@ type AuditProps = {
   onBackToHome: () => void;
 };
 
-const axisOrder: ('axis1' | 'axis2' | 'axis3' | 'axis4')[] = ['axis1', 'axis2', 'axis3', 'axis4'];
+const axisOrder: (keyof typeof surveyData)[] = ['axis1', 'axis2', 'axis3', 'axis4'];
 
 const axisWeights = {
     axis1: { q1: 1.5, q7: 1.5, q8: 1.4, q9: 1.4, default: 1.0 },
@@ -46,7 +46,7 @@ function getInterpretation(score: number) {
 }
 
 
-function calculateAxisScore(axisId: 'axis1' | 'axis2' | 'axis3' | 'axis4', answers: Answers) {
+function calculateAxisScore(axisId: keyof typeof surveyData, answers: Answers) {
     let totalWeightedScore = 0;
     let totalWeights = 0;
     const weightsForAxis = axisWeights[axisId];
@@ -265,9 +265,8 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
                 <div>
                     <h1 className="text-2xl font-bold text-primary">تقرير تقييم الصمود الرقمي - Master SANDA</h1>
                     <p className="text-lg mt-2"><strong>العمالة:</strong> {governorate}</p>
-                    <p className="text-
-                    md"><strong>الطالب الباحث:</strong>محمد أمين لرانتي</p>
-                    <p>تحت إشراف الأستاذة: رشيدة المرابط</p>
+                    <p className="text-md"><strong>الطالب الباحث:</strong> محمد لرانتي</p>
+                    <p className="text-md"><strong>الأستاذة المشرفة:</strong> رشيدة المرابط</p>
                     <p className="text-sm"><strong>تاريخ التقرير:</strong> {today}</p>
                 </div>
                 <img src="/master_logo.png" alt="Master SANDA Logo" style={{maxHeight: '75px'}} />
@@ -394,7 +393,7 @@ export default function Audit({ governorate, onFinishAudit, onBackToHome }: Audi
       <header className="max-w-5xl mx-auto mb-8 relative no-print">
         <div className="text-center">
             <p className="text-sm text-muted-foreground">
-            رسالة الماستر:  تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
+            رسالة الماستر: هندسة تدبير مخاطر الكوارث الطبيعية بعمالات (عين السبع - الحي المحمدي، سيدي البرنوصي، والمحمدية): من الوقاية إلى إعادة الإعمار وفق مقاربة إطار سنداي.
             </p>
             <p className="font-bold mt-2 text-primary">التقييم الخاص بـ: {governorate}</p>
             <div className="flex flex-col items-center gap-1 mt-1">

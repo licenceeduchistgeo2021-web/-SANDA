@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -96,8 +97,8 @@ const ExportModal = ({ results }: { results: AuditResult[] }) => {
                             <h1>Master SANDA - University Hassan II</h1>
                             <p style="font-size:1.2rem;"><strong>تقرير تقييم الصمود الرقمي الشامل</strong></p>
                             <p><strong>العمالة:</strong> ${result.governorate}</p>
-                            <p><strong>الطالب الباحث:</strong> محمد ل
-                        رانتي</p>
+                            <p><strong>الطالب الباحث:</strong> محمد لرانتي</p>
+                            <p><strong>الأستاذة المشرفة:</strong> رشيدة المرابط</p>
                             <p><strong>تاريخ التقرير:</strong> ${today}</p>
                          </div>
                          <img src="/master_logo.png" alt="Master SANDA Logo" />
@@ -488,6 +489,23 @@ export default function Landing({ onStartAudit, onGoToComparison, onGoToMaps }: 
                   توزيع النطاقات الجغرافية للمخاطر وتلوين المناطق حسب مؤشر القابلية للتضرر.
                 </p>
               </CardContent>
+            </Card>
+            <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col cursor-pointer hover:border-primary/50">
+              <Link href="/sponge-city" className="w-full h-full">
+                <CardHeader>
+                  <div className="mx-auto bg-primary/10 rounded-full p-4 w-fit mb-4">
+                    <Map className="h-8 w-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl font-bold">
+                    المدينة الإسفنجية
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-muted-foreground">
+                    واجهة تفاعلية خاصة بتطبيق منهجية Sponge City على عمالة المحمدية.
+                  </p>
+                </CardContent>
+              </Link>
             </Card>
             <Card className="text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
